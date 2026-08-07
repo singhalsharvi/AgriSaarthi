@@ -1,0 +1,146 @@
+{
+  "dataset_info": {
+    "initial_rows": 2200,
+    "clean_rows": 2200,
+    "duplicates_removed": 0,
+    "variety_eval": {
+      "n_unique": 1,
+      "keep": false,
+      "justification": "Variety contains only 1 unique value (['Standard_V1']). Zero variance feature carries 0 bits of mutual information for classification and must be dropped.",
+      "val_counts": {
+        "Standard_V1": 1.0
+      }
+    },
+    "classes": [
+      "apple",
+      "banana",
+      "blackgram",
+      "chickpea",
+      "coconut",
+      "coffee",
+      "cotton",
+      "grapes",
+      "jute",
+      "kidneybeans",
+      "lentil",
+      "maize",
+      "mango",
+      "mothbeans",
+      "mungbean",
+      "muskmelon",
+      "orange",
+      "papaya",
+      "pigeonpeas",
+      "pomegranate",
+      "rice",
+      "watermelon"
+    ],
+    "num_classes": 22
+  },
+  "best_model": "Random Forest",
+  "best_holdout_f1": 1.0,
+  "selection_explanation": "The best performing model is 'Random Forest' achieving a Weighted F1-Score of 1.0000 on the holdout test set and a 5-Fold Cross-Validation score of 0.9989 (\u00b10.0023). It balances strong multi-class decision boundaries with low prediction latency (0.2177 ms/sample), making it ideal for production FastAPI serving.",
+  "diagnostics": {
+    "train_f1_score": 0.9994,
+    "test_f1_score": 1.0,
+    "train_test_gap": -0.0006,
+    "fit_status": "Optimal Fit (Generalizing Well)",
+    "leakage_detected": false,
+    "leakage_message": "No data leakage detected. Train and test splits were properly stratified and scaled independently.",
+    "recommendations": [
+      "Model demonstrates exceptional generalization across all 22 crop classes.",
+      "Ready for production FastAPI backend deployment."
+    ],
+    "top_3_important_features": [
+      "Nitrogen",
+      "Humidity",
+      "Rainfall"
+    ]
+  },
+  "model_comparison": [
+    {
+      "Model": "Random Forest",
+      "Accuracy": 1.0,
+      "Precision (Macro)": 1.0,
+      "Precision (Weighted)": 1.0,
+      "Recall (Macro)": 1.0,
+      "Recall (Weighted)": 1.0,
+      "F1 Score (Macro)": 1.0,
+      "F1 Score (Weighted)": 1.0,
+      "CV Mean F1": 0.9989,
+      "CV Std F1": 0.0023,
+      "Training Time (s)": 0.3829,
+      "Prediction Latency (ms/sample)": 0.2177
+    },
+    {
+      "Model": "Extra Trees",
+      "Accuracy": 1.0,
+      "Precision (Macro)": 1.0,
+      "Precision (Weighted)": 1.0,
+      "Recall (Macro)": 1.0,
+      "Recall (Weighted)": 1.0,
+      "F1 Score (Macro)": 1.0,
+      "F1 Score (Weighted)": 1.0,
+      "CV Mean F1": 0.9977,
+      "CV Std F1": 0.0021,
+      "Training Time (s)": 0.5784,
+      "Prediction Latency (ms/sample)": 0.1765
+    },
+    {
+      "Model": "LightGBM",
+      "Accuracy": 0.9955,
+      "Precision (Macro)": 0.9959,
+      "Precision (Weighted)": 0.9959,
+      "Recall (Macro)": 0.9955,
+      "Recall (Weighted)": 0.9955,
+      "F1 Score (Macro)": 0.9955,
+      "F1 Score (Weighted)": 0.9955,
+      "CV Mean F1": 0.996,
+      "CV Std F1": 0.0014,
+      "Training Time (s)": 4.0384,
+      "Prediction Latency (ms/sample)": 0.1283
+    },
+    {
+      "Model": "CatBoost",
+      "Accuracy": 0.9955,
+      "Precision (Macro)": 0.9957,
+      "Precision (Weighted)": 0.9957,
+      "Recall (Macro)": 0.9955,
+      "Recall (Weighted)": 0.9955,
+      "F1 Score (Macro)": 0.9955,
+      "F1 Score (Weighted)": 0.9955,
+      "CV Mean F1": 0.9972,
+      "CV Std F1": 0.0018,
+      "Training Time (s)": 3.3955,
+      "Prediction Latency (ms/sample)": 0.0214
+    },
+    {
+      "Model": "XGBoost",
+      "Accuracy": 0.9932,
+      "Precision (Macro)": 0.9937,
+      "Precision (Weighted)": 0.9937,
+      "Recall (Macro)": 0.9932,
+      "Recall (Weighted)": 0.9932,
+      "F1 Score (Macro)": 0.993,
+      "F1 Score (Weighted)": 0.993,
+      "CV Mean F1": 0.9954,
+      "CV Std F1": 0.0039,
+      "Training Time (s)": 1.2355,
+      "Prediction Latency (ms/sample)": 0.1105
+    },
+    {
+      "Model": "HistGradientBoosting",
+      "Accuracy": 0.9909,
+      "Precision (Macro)": 0.9915,
+      "Precision (Weighted)": 0.9915,
+      "Recall (Macro)": 0.9909,
+      "Recall (Weighted)": 0.9909,
+      "F1 Score (Macro)": 0.9909,
+      "F1 Score (Weighted)": 0.9909,
+      "CV Mean F1": 0.9949,
+      "CV Std F1": 0.0038,
+      "Training Time (s)": 3.778,
+      "Prediction Latency (ms/sample)": 0.1052
+    }
+  ]
+}

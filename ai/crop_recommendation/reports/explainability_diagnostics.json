@@ -1,0 +1,17 @@
+{
+  "train_f1_score": 0.9994,
+  "test_f1_score": 1.0,
+  "train_test_gap": -0.0006,
+  "fit_status": "Optimal Fit (Generalizing Well)",
+  "leakage_detected": false,
+  "leakage_message": "No data leakage detected. Train and test splits were properly stratified and scaled independently.",
+  "recommendations": [
+    "Model demonstrates exceptional generalization across all 22 crop classes.",
+    "Ready for production FastAPI backend deployment."
+  ],
+  "top_3_important_features": [
+    "Nitrogen",
+    "Humidity",
+    "Rainfall"
+  ]
+}
