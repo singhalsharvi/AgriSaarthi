@@ -2,7 +2,7 @@ import sys
 from pathlib import Path
 import chromadb
 
-base = Path(r"c:/Users/lenovo/Crop-recommendation/ai/government_schemes")
+base = Path(__file__).resolve().parents[1]
 persist_dir = base / "chroma_db"
 markdown_files = sorted((base / "data").glob("*.md"))
 

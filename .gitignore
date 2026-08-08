@@ -1,6 +1,7 @@
 ai/.venv/
 ai/.vscode/
 .venv/
+.env
 __pycache__/
 *.pyc
 ai/tmp_debug_retrieval.py
