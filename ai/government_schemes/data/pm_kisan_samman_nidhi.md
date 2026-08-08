@@ -11,3 +11,4 @@
 - Applicable Crops: All agricultural crops
 - Farmer Category: Small and marginal farmer families
 - FAQs: Official FAQs and helpdesk information are available on the PM-KISAN portal.
+    

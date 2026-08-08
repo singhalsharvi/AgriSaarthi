@@ -1,5 +1,6 @@
-catboost_info/
+ai/.venv/
+ai/.vscode/
+.venv/
 __pycache__/
 *.pyc
-*.pyo
-.DS_Store
+ai/tmp_debug_retrieval.py
