@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AgriSaarthi — Digital Companion for Indian Farmers</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Hind:wght@400;500;600;700&family=Noto+Sans+Bengali:wght@400;500;600;700&family=Noto+Sans+Devanagari:wght@400;500;600;700&family=Noto+Sans+Kannada:wght@400;500;600;700&family=Outfit:wght@400;500;600;700;800&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- React & Babel CDNs -->
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+  <style>
+    :root {
+      --color-forest-green: #1B4D2E;
+      --color-forest-green-dark: #12361F;
+      --color-leaf-green: #2D6A3F;
+      --color-leaf-light: #E8F2EC;
+      --color-mitti-brown: #6E4723;
+      --color-mitti-light: #F4ECE3;
+      --color-terracotta: #C85A32;
+      --color-terracotta-light: #F9ECE7;
+      --color-mustard: #DA9B26;
+      --color-wheat-gold: #E5B842;
+      --color-wheat-light: #FCF5E3;
+      --color-cream-bg: #FDFBF7;
+      --color-cream-surface: #F6F2EA;
+      --color-cream-border: #E5DDD0;
+      --color-charcoal: #1A1C19;
+      --color-charcoal-muted: #525750;
+      --color-white: #FFFFFF;
+      --font-primary: 'Plus Jakarta Sans', sans-serif;
+      --font-heading: 'Outfit', sans-serif;
+      --sidebar-width: 280px;
+      --radius-md: 14px;
+      --radius-lg: 20px;
+      --radius-full: 9999px;
+      --shadow-sm: 0 2px 6px rgba(27, 77, 46, 0.04);
+      --shadow-md: 0 4px 16px rgba(27, 77, 46, 0.08);
+      --shadow-lg: 0 12px 32px rgba(27, 77, 46, 0.12);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--font-primary); background-color: var(--color-cream-bg); color: var(--color-charcoal); line-height: 1.6; }
+    h1, h2, h3, h4 { font-family: var(--font-heading); color: var(--color-forest-green-dark); }
+    button { cursor: pointer; border: none; background: none; font-family: inherit; }
+    .app-container { display: flex; min-height: 100vh; }
+    .main-content { flex: 1; margin-left: var(--sidebar-width); min-height: 100vh; display: flex; flex-direction: column; }
+    .page-container { flex: 1; padding: 2.5rem; max-width: 1280px; margin: 0 auto; width: 100%; }
+    .desi-card { background: var(--color-white); border: 1.5px solid var(--color-cream-border); border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); overflow: hidden; transition: all 0.2s ease; }
+    .desi-card:hover { transform: translateY(-2px); box-shadow: var(--shadow-md); }
+    .btn-primary { background-color: var(--color-forest-green); color: white; padding: 0.85rem 1.75rem; border-radius: var(--radius-full); font-weight: 700; display: inline-flex; align-items: center; gap: 0.5rem; }
+    .btn-secondary { background-color: var(--color-cream-surface); color: var(--color-mitti-brown); border: 1.5px solid var(--color-cream-border); padding: 0.85rem 1.75rem; border-radius: var(--radius-full); font-weight: 700; }
+    .badge-desi { background-color: var(--color-leaf-light); color: var(--color-forest-green); padding: 0.35rem 0.85rem; border-radius: var(--radius-full); font-size: 0.85rem; font-weight: 700; }
+    .form-input, .form-select { width: 100%; padding: 0.85rem 1.1rem; border: 1.5px solid var(--color-cream-border); border-radius: var(--radius-md); font-size: 1rem; background: var(--color-white); }
+
+    @media (max-width: 1024px) {
+      .main-content { margin-left: 0; padding-top: 64px; padding-bottom: 64px; }
+      .desktop-sidebar { display: none !important; }
+      .mobile-header { display: flex !important; }
+      .mobile-bottom-nav { display: flex !important; }
+    }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useEffect } = React;
+
+    const TRANSLATIONS = {
+      en: {
+        brand: "AgriSaarthi",
+        tagline: "Your Farm. Your Future. Your Saarthi.",
+        brandPhrase: "Apni Fasal. Apna Faisla.",
+        heroTitle: "Your Farm. Your Future. Your Saarthi.",
+        heroSub: "Smart farming guidance for crops, plant health and government support — all in one place.",
+        getStarted: "GET STARTED",
+        exploreFeatures: "EXPLORE FEATURES",
+        navHome: "HOME",
+        navFeatures: "FEATURES",
+        navAbout: "ABOUT US",
+        navCrop: "CROP RECOMMENDATION",
+        navDisease: "DISEASE DETECTION",
+        navSchemes: "GOVERNMENT SCHEMES",
+        navDashboard: "DASHBOARD",
+        navHelp: "HELP & SUPPORT",
+        navSignIn: "Sign In",
+        chooseLang: "Choose Language"
+      },
+      hi: {
+        brand: "कृषि सारथी",
+        tagline: "आपका खेत। आपका भविष्य। आपका सारथी।",
+        brandPhrase: "अपनी फसल। अपना फैसला।",
+        heroTitle: "आपका खेत। आपका भविष्य। आपका सारथी।",
+        heroSub: "फसलों, पौधों के स्वास्थ्य और सरकारी सहायता के लिए स्मार्ट कृषि मार्गदर्शन — एक ही स्थान पर।",
+        getStarted: "शुरू करें",
+        exploreFeatures: "विशेषताएं देखें",
+        navHome: "मुख्य पृष्ठ",
+        navFeatures: "विशेषताएं",
+        navAbout: "हमारे बारे में",
+        navCrop: "फसल सिफारिश",
+        navDisease: "पौधों की बीमारी की जांच",
+        navSchemes: "सरकारी योजनाएं",
+        navDashboard: "किसान डैशबोर्ड",
+        navHelp: "सहायता",
+        navSignIn: "साइन इन",
+        chooseLang: "भाषा चुनें"
+      },
+      bn: {
+        brand: "কৃষি সারথী",
+        tagline: "আপনার জমি। আপনার ভবিষ্যৎ। আপনার সারথী।",
+        brandPhrase: "নিজের ফসল। নিজের সিদ্ধান্ত।",
+        heroTitle: "আপনার জমি। আপনার ভবিষ্যৎ। আপনার সারথী।",
+        heroSub: "ফসল, গাছের স্বাস্থ্য এবং সরকারি সহায়তার জন্য স্মার্ট কৃষি নির্দেশিকা — এক জায়গায়।",
+        getStarted: "শুরু করুন",
+        exploreFeatures: "বৈশিষ্ট্যসমূহ দেখুন",
+        navHome: "হোম",
+        navFeatures: "বৈশিষ্ট্যসমূহ",
+        navAbout: "আমাদের কথা",
+        navCrop: "ফসল সুপারিশ",
+        navDisease: "রোগ সনাক্তকরণ",
+        navSchemes: "সরকারি প্রকল্প",
+        navDashboard: "কৃষক ড্যাশবোর্ড",
+        navHelp: "সাহায্য",
+        navSignIn: "সাইন ইন",
+        chooseLang: "ভাষা নির্বাচন করুন"
+      },
+      mr: {
+        brand: "कृषी सारथी",
+        tagline: "तुमची शेती। तुमचे भविष्य। तुमचा सारथी।",
+        brandPhrase: "आपली शेती। आपला निर्णय।",
+        heroTitle: "तुमची शेती। तुमचे भविष्य। तुमचा सारथी।",
+        heroSub: "पिके, वनस्पतींचे आरोग्य आणि सरकारी मदतीसाठी स्मार्ट कृषी मार्गदर्शन — एकाच ठिकाणी।",
+        getStarted: "शुरू करा",
+        exploreFeatures: "वैशिष्ट्ये पहा",
+        navHome: "मुख्य पृष्ठ",
+        navFeatures: "वैशिष्ट्ये",
+        navAbout: "आमच्याबद्दल",
+        navCrop: "पिक सल्ला",
+        navDisease: "रोग निदान",
+        navSchemes: "शासकीय योजना",
+        navDashboard: "शेतकरी डॅशबोर्ड",
+        navHelp: "मदत",
+        navSignIn: "साइन इन",
+        chooseLang: "भाषा निवडा"
+      },
+      kn: {
+        brand: "ಕೃಷಿ ಸಾರಥಿ",
+        tagline: "ನಿಮ್ಮ ಹೊಲ. ನಿಮ್ಮ ಭವಿಷ್ಯ. ನಿಮ್ಮ ಸಾರಥಿ.",
+        brandPhrase: "ನಮ್ಮ ಬೆಳೆ. ನಮ್ಮ ನಿರ್ಧಾರ.",
+        heroTitle: "ನಿಮ್ಮ ಹೊಲ. ನಿಮ್ಮ ಭವಿಷ್ಯ. ನಿಮ್ಮ ಸಾರಥಿ.",
+        heroSub: "ಬೆಳೆಗಳು, ಸಸ್ಯಗಳ ಆರೋಗ್ಯ ಮತ್ತು ಸರ್ಕಾರಿ ನೆರವಿಗಾಗಿ ಸ್ಮಾರ್ಟ್ ಕೃಷಿ ಮಾರ್ಗದರ್ಶನ — ಒಂದೇ ಸ್ಥಳದಲ್ಲಿ.",
+        getStarted: "ಪ್ರಾರಂಭಿಸಿ",
+        exploreFeatures: "ವೈಶಿಷ್ಟ್ಯಗಳನ್ನು ವೀಕ್ಷಿಸಿ",
+        navHome: "ಮುಖ್ಯ ಪುಟ",
+        navFeatures: "ವೈಶಿಷ್ಟ್ಯಗಳು",
+        navAbout: "ನಮ್ಮ ಬಗ್ಗೆ",
+        navCrop: "ಬೆಳೆ ಶಿಫಾರಸು",
+        navDisease: "ರೋಗ ಪತ್ತೆ",
+        navSchemes: "ಸರ್ಕಾರಿ ಯೋಜನೆಗಳು",
+        navDashboard: "ರೈತ ಡ್ಯಾಶ್‌ಬೋರ್ಡ್",
+        navHelp: "ಸಹಾಯ",
+        navSignIn: "ಸೈನ್ ಇನ್",
+        chooseLang: "ಭಾಷೆಯನ್ನು ಆಯ್ಕೆಮಾಡಿ"
+      }
+    };
+
+    const LANGUAGES = [
+      { code: 'en', native: 'English' },
+      { code: 'hi', native: 'हिन्दी' },
+      { code: 'bn', native: 'বাংলা' },
+      { code: 'mr', native: 'मराठी' },
+      { code: 'kn', native: 'ಕನ್ನಡ' }
+    ];
+
+    function App() {
+      const [lang, setLang] = useState('en');
+      const [activeTab, setActiveTab] = useState('home');
+      const [isLangOpen, setIsLangOpen] = useState(false);
+      const [user, setUser] = useState(null);
+
+      // Crop Rec State
+      const [cropLoc, setCropLoc] = useState('Meerut, Uttar Pradesh');
+      const [cropSeason, setCropSeason] = useState('Kharif');
+      const [cropResults, setCropResults] = useState(null);
+      const [cropLoading, setCropLoading] = useState(false);
+
+      // Disease State
+      const [diseaseImg, setDiseaseImg] = useState(null);
+      const [diseaseLoading, setDiseaseLoading] = useState(false);
+      const [diseaseResults, setDiseaseResults] = useState(null);
+
+      // Schemes State
+      const [schemeState, setSchemeState] = useState('Uttar Pradesh');
+      const [schemeResults, setSchemeResults] = useState(null);
+      const [schemeLoading, setSchemeLoading] = useState(false);
+
+      const t = (key) => (TRANSLATIONS[lang] && TRANSLATIONS[lang][key]) || TRANSLATIONS.en[key] || key;
+
+      const handleCropSubmit = (e) => {
+        e.preventDefault();
+        setCropLoading(true);
+        setCropResults(null);
+        setTimeout(() => {
+          setCropResults({
+            location: cropLoc,
+            season: cropSeason,
+            soil: "Alluvial Soil (Loam), pH: 6.8",
+            confidence: "92.40%",
+            crops: [
+              { name: "Rice (Paddy)", confidence: "92.40%", reason: "Optimal rainfall (1050mm) and high humidity (68%) match local Alluvial soil during Kharif season.", img: "https://images.unsplash.com/photo-1536657464919-892534f60d6e?auto=format&fit=crop&w=800&q=80" },
+              { name: "Maize (Corn)", confidence: "87.15%", reason: "Well-drained loam soil with moderate temperature provides excellent root establishment.", img: "https://images.unsplash.com/photo-1551754655-cd27e38d2076?auto=format&fit=crop&w=800&q=80" },
+              { name: "Sugarcane", confidence: "81.90%", reason: "High temperature tolerance and fertile river plain soil support high sucrose yield.", img: "https://images.unsplash.com/photo-1601593346740-925612772716?auto=format&fit=crop&w=800&q=80" }
+            ]
+          });
+          setCropLoading(false);
+        }, 1500);
+      };
+
+      const handleDiseaseSubmit = (e) => {
+        e.preventDefault();
+        setDiseaseLoading(true);
+        setDiseaseResults(null);
+        setTimeout(() => {
+          setDiseaseResults({
+            status: "Tomato — Late Blight (Phytophthora infestans)",
+            confidence: "91.80%",
+            matches: [
+              { name: "Late Blight", conf: "91.8%" },
+              { name: "Early Blight", conf: "5.2%" },
+              { name: "Healthy Leaf", conf: "3.0%" }
+            ],
+            symptoms: "Water-soaked dark brown spots with yellow margins on leaf surfaces.",
+            treatment: "1. Apply Copper Oxychloride (3g/liter water) or Mancozeb 75 WP (2g/liter).\n2. Remove severely infected foliage and maintain proper field spacing."
+          });
+          setDiseaseLoading(false);
+        }, 1500);
+      };
+
+      const handleSchemeSubmit = (e) => {
+        e.preventDefault();
+        setSchemeLoading(true);
+        setSchemeResults(null);
+        setTimeout(() => {
+          setSchemeResults([
+            { name: "PM-KISAN (Pradhan Mantri Kisan Samman Nidhi)", snippet: "Direct financial support of ₹6,000 per year in 3 equal installments to small & marginal landholding farmers.", site: "https://pmkisan.gov.in", benefits: "₹6,000 / year direct bank transfer" },
+            { name: "Pradhan Mantri Fasal Bima Yojana (PMFBY)", snippet: "Comprehensive crop loss insurance against drought, flood, pests and disease outbreaks with low premium rates.", site: "https://pmfby.gov.in", benefits: "1.5% Rabi / 2% Kharif premium coverage" },
+            { name: "Kisan Credit Card (KCC) Scheme", snippet: "Provides timely institutional credit at subsidized interest rate of 4% per annum for seeds & fertilizers.", site: "https://kcc.gov.in", benefits: "Subsidized loan up to ₹3 Lakhs at 4%" }
+          ]);
+          setSchemeLoading(false);
+        }, 1200);
+      };
+
+      return (
+        <div className="app-container">
+          {/* Desktop Left Sidebar */}
+          <aside style={{
+            width: 'var(--sidebar-width)',
+            height: '100vh',
+            position: 'fixed',
+            top: 0, left: 0,
+            backgroundColor: 'var(--color-white)',
+            borderRight: '1.5px solid var(--color-cream-border)',
+            display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+            padding: '1.5rem 1rem', zIndex: 40
+          }} className="desktop-sidebar">
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', paddingBottom: '1.25rem', borderBottom: '1px solid var(--color-cream-border)', marginBottom: '1.25rem' }}>
+                <div style={{ width: '42px', height: '42px', borderRadius: '12px', background: 'var(--color-leaf-light)', border: '1px solid var(--color-leaf-green)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem' }}>
+                  🌾
+                </div>
+                <div>
+                  <h1 style={{ fontSize: '1.35rem', color: 'var(--color-forest-green-dark)', margin: 0, fontWeight: 800 }}>{t('brand')}</h1>
+                  <p style={{ fontSize: '0.75rem', color: 'var(--color-mitti-brown)', fontWeight: 600, margin: 0 }}>{t('brandPhrase')}</p>
+                </div>
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.35rem' }}>
+                {[
+                  { id: 'home', label: t('navHome'), icon: '🏠' },
+                  { id: 'features', label: t('navFeatures'), icon: '🧭' },
+                  { id: 'about', label: t('navAbout'), icon: 'ℹ️' },
+                ].map(item => (
+                  <button key={item.id} onClick={() => setActiveTab(item.id)} style={{
+                    display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)',
+                    color: activeTab === item.id ? 'var(--color-forest-green-dark)' : 'var(--color-charcoal-muted)',
+                    background: activeTab === item.id ? 'var(--color-leaf-light)' : 'transparent',
+                    fontWeight: activeTab === item.id ? 800 : 600, fontSize: '0.92rem', textAlign: 'left'
+                  }}>
+                    <span>{item.icon}</span> <span>{item.label}</span>
+                  </button>
+                ))}
+
+                <div style={{ height: '1px', background: 'var(--color-cream-border)', margin: '0.75rem 0' }} />
+                <span style={{ fontSize: '0.72rem', fontWeight: 800, color: 'var(--color-mitti-brown)', letterSpacing: '0.05em', padding: '0 0.85rem' }}>SERVICES</span>
+
+                {[
+                  { id: 'crop', label: t('navCrop'), icon: '🌾' },
+                  { id: 'disease', label: t('navDisease'), icon: '🌿' },
+                  { id: 'schemes', label: t('navSchemes'), icon: '🏛️' },
+                  { id: 'dashboard', label: t('navDashboard'), icon: '📋' }
+                ].map(item => (
+                  <button key={item.id} onClick={() => setActiveTab(item.id)} style={{
+                    display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)',
+                    color: activeTab === item.id ? 'var(--color-forest-green-dark)' : 'var(--color-charcoal)',
+                    background: activeTab === item.id ? 'var(--color-leaf-light)' : 'transparent',
+                    borderLeft: activeTab === item.id ? '3.5px solid var(--color-forest-green)' : '3.5px solid transparent',
+                    fontWeight: activeTab === item.id ? 800 : 600, fontSize: '0.9rem', textAlign: 'left'
+                  }}>
+                    <span>{item.icon}</span> <span>{item.label}</span>
+                  </button>
+                ))}
+
+                <button onClick={() => setActiveTab('help')} style={{
+                  display: 'flex', alignItems: 'center', gap: '0.75rem', padding: '0.75rem 1rem', borderRadius: 'var(--radius-md)',
+                  color: activeTab === 'help' ? 'var(--color-forest-green-dark)' : 'var(--color-charcoal-muted)',
+                  background: activeTab === 'help' ? 'var(--color-leaf-light)' : 'transparent',
+                  fontWeight: activeTab === 'help' ? 800 : 600, fontSize: '0.9rem', marginTop: '0.5rem', textAlign: 'left'
+                }}>
+                  <span>❓</span> <span>{t('navHelp')}</span>
+                </button>
+              </div>
+            </div>
+
+            <div style={{ paddingTop: '1rem', borderTop: '1px solid var(--color-cream-border)', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+              <button onClick={() => setIsLangOpen(true)} style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0.65rem 0.85rem',
+                border: '1.5px solid var(--color-cream-border)', borderRadius: 'var(--radius-md)', background: 'var(--color-cream-surface)',
+                fontWeight: 700, fontSize: '0.85rem', color: 'var(--color-forest-green)'
+              }}>
+                <span>🌐 {LANGUAGES.find(l => l.code === lang)?.native}</span>
+                <span style={{ fontSize: '0.75rem', color: 'var(--color-mitti-brown)' }}>Switch</span>
+              </button>
+
+              <button onClick={() => setActiveTab(user ? 'dashboard' : 'signin')} style={{
+                padding: '0.75rem', background: 'var(--color-forest-green)', color: 'white', borderRadius: 'var(--radius-md)',
+                fontWeight: 800, fontSize: '0.9rem', textAlign: 'center'
+              }}>
+                👤 {user ? user.name : t('navSignIn')}
+              </button>
+            </div>
+          </aside>
+
+          {/* Main Viewport */}
+          <main className="main-content">
+            <div className="page-container">
+              {/* PAGE 1: HOME */}
+              {activeTab === 'home' && (
+                <div>
+                  <div style={{
+                    borderRadius: 'var(--radius-lg)', overflow: 'hidden', minHeight: '480px',
+                    background: `linear-gradient(to right, rgba(18, 54, 31, 0.92) 0%, rgba(18, 54, 31, 0.75) 50%, rgba(0,0,0,0.3) 100%), url('https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=1600&q=80') center/cover no-repeat`,
+                    padding: '3.5rem 3rem', color: 'white', marginBottom: '3.5rem'
+                  }}>
+                    <span className="badge-desi" style={{ color: 'var(--color-wheat-gold)', background: 'rgba(255,255,255,0.15)', marginBottom: '1.5rem', display: 'inline-block' }}>
+                      Digital India meets real Indian farming
+                    </span>
+                    <h1 style={{ fontSize: '3.2rem', color: '#FFFFFF', fontWeight: 800, lineHeight: 1.15, marginBottom: '1.25rem' }}>
+                      {t('heroTitle')}
+                    </h1>
+                    <p style={{ fontSize: '1.2rem', color: 'rgba(255,255,255,0.92)', marginBottom: '2rem', maxWidth: '640px' }}>
+                      {t('heroSub')}
+                    </p>
+                    <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+                      <button onClick={() => setActiveTab('crop')} style={{ background: 'var(--color-wheat-gold)', color: 'var(--color-forest-green-dark)', padding: '1rem 2.25rem', borderRadius: 'var(--radius-full)', fontWeight: 800, fontSize: '1.05rem' }}>
+                        {t('getStarted')} →
+                      </button>
+                      <button onClick={() => setActiveTab('features')} style={{ background: 'rgba(255,255,255,0.15)', color: 'white', border: '1.5px solid rgba(255,255,255,0.4)', padding: '1rem 2rem', borderRadius: 'var(--radius-full)', fontWeight: 700, fontSize: '1rem' }}>
+                        {t('exploreFeatures')}
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 3 Photo Led Feature Direct Links */}
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '1.5rem', marginBottom: '3.5rem' }}>
+                    {[
+                      { id: 'crop', title: 'Know What To Grow', icon: '🌾', desc: 'Find crops suited to your village location, season and soil.', img: 'https://images.unsplash.com/photo-1592982537447-7440770cbfc9?auto=format&fit=crop&w=600&q=80' },
+                      { id: 'disease', title: 'Protect Your Crops', icon: '🌿', desc: 'Upload a plant leaf photo and diagnose possible diseases.', img: 'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?auto=format&fit=crop&w=600&q=80' },
+                      { id: 'schemes', title: 'Know Your Benefits', icon: '🏛️', desc: 'Discover government subsidies and financial support schemes.', img: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=600&q=80' }
+                    ].map(item => (
+                      <div key={item.id} onClick={() => setActiveTab(item.id)} className="desi-card" style={{ cursor: 'pointer' }}>
+                        <div style={{ height: '160px', background: `url('${item.img}') center/cover no-repeat` }} />
+                        <div style={{ padding: '1.5rem' }}>
+                          <h3 style={{ fontSize: '1.2rem', color: 'var(--color-forest-green-dark)', marginBottom: '0.4rem' }}>{item.icon} {item.title}</h3>
+                          <p style={{ fontSize: '0.9rem', color: 'var(--color-charcoal-muted)', marginBottom: '1rem' }}>{item.desc}</p>
+                          <span style={{ color: 'var(--color-forest-green)', fontWeight: 800, fontSize: '0.9rem' }}>Open Tool →</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* PAGE 2: FEATURES */}
+              {activeTab === 'features' && (
+                <div>
+                  <h1 style={{ fontSize: '2.4rem', color: 'var(--color-forest-green-dark)', marginBottom: '2rem', fontWeight: 800 }}>Tools Built Around Your Farm</h1>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '2.5rem' }}>
+                    {[
+                      { id: 'crop', title: 'Crop Recommendation', desc: 'Analyzes village location, Kharif/Rabi/Zaid season, weather history & soil parameters for top 3 matching crops.', icon: '🌾', img: 'https://images.unsplash.com/photo-1592982537447-7440770cbfc9?auto=format&fit=crop&w=800&q=80' },
+                      { id: 'disease', title: 'Plant Disease Detection', desc: 'Upload a plant leaf photo and diagnose fungal or bacterial infections with verified ICAR treatment remedies.', icon: '🌿', img: 'https://images.unsplash.com/photo-1625246333195-78d9c38ad449?auto=format&fit=crop&w=800&q=80' },
+                      { id: 'schemes', title: 'Government Schemes', desc: 'Find eligible central and state government subsidies (PM-KISAN, PMFBY, KCC) with document requirements.', icon: '🏛️', img: 'https://images.unsplash.com/photo-1542601906990-b4d3fb778b09?auto=format&fit=crop&w=800&q=80' }
+                    ].map(f => (
+                      <div key={f.id} className="desi-card" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))' }}>
+                        <div style={{ minHeight: '260px', background: `url('${f.img}') center/cover no-repeat` }} />
+                        <div style={{ padding: '2.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                          <h2 style={{ fontSize: '1.8rem', color: 'var(--color-forest-green-dark)', marginBottom: '0.85rem' }}>{f.icon} {f.title}</h2>
+                          <p style={{ fontSize: '1rem', color: 'var(--color-charcoal-muted)', marginBottom: '1.5rem' }}>{f.desc}</p>
+                          <button onClick={() => setActiveTab(f.id)} className="btn-primary" style={{ width: 'fit-content' }}>Launch Feature →</button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* PAGE 3: CROP RECOMMENDATION */}
+              {activeTab === 'crop' && (
+                <div>
+                  <div className="desi-card" style={{ marginBottom: '2rem' }}>
+                    <div style={{ padding: '2rem', background: 'linear-gradient(to right, #1B4D2E, #2D6A3F)', color: 'white' }}>
+                      <span className="badge-desi" style={{ color: 'var(--color-wheat-gold)', background: 'rgba(255,255,255,0.2)', marginBottom: '0.5rem', display: 'inline-block' }}>🌾 Crop Advisory</span>
+                      <h1 style={{ color: 'white', fontSize: '2rem' }}>Find the Right Crop for Your Farm</h1>
+                      <p style={{ color: 'rgba(255,255,255,0.9)' }}>Tell us where you farm and which season you are planning for.</p>
+                    </div>
+                    <form onSubmit={handleCropSubmit} style={{ padding: '2rem' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1.5rem', marginBottom: '1.5rem' }}>
+                        <div>
+                          <label style={{ fontWeight: 700, display: 'block', marginBottom: '0.5rem' }}>Village / City / District</label>
+                          <input type="text" className="form-input" value={cropLoc} onChange={e => setCropLoc(e.target.value)} required />
+                        </div>
+                        <div>
+                          <label style={{ fontWeight: 700, display: 'block', marginBottom: '0.5rem' }}>Cropping Season</label>
+                          <select className="form-select" value={cropSeason} onChange={e => setCropSeason(e.target.value)}>
+                            <option value="Kharif">🌧️ Kharif</option>
+                            <option value="Rabi">❄️ Rabi</option>
+                            <option value="Zaid">☀️ Zaid</option>
+                          </select>
+                        </div>
+                      </div>
+                      <button type="submit" className="btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
+                        {cropLoading ? 'ANALYZING FARM CONDITIONS...' : 'ANALYZE MY FARM'}
+                      </button>
+                    </form>
+                  </div>
+
+                  {cropResults && (
+                    <div>
+                      <h2 style={{ fontSize: '1.6rem', marginBottom: '1.25rem' }}>Top 3 Recommended Crops</h2>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                        {cropResults.crops.map((c, idx) => (
+                          <div key={idx} className="desi-card" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))' }}>
+                            <div style={{ minHeight: '220px', background: `url('${c.img}') center/cover no-repeat` }} />
+                            <div style={{ padding: '1.75rem' }}>
+                              <span className="badge-desi" style={{ marginBottom: '0.5rem', display: 'inline-block' }}>#{idx+1} Match — {c.confidence}</span>
+                              <h3 style={{ fontSize: '1.6rem', color: 'var(--color-forest-green-dark)', marginBottom: '0.5rem' }}>{c.name}</h3>
+                              <p style={{ fontSize: '0.95rem', color: 'var(--color-charcoal-muted)' }}>{c.reason}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* PAGE 4: DISEASE DETECTION */}
+              {activeTab === 'disease' && (
+                <div>
+                  <div className="desi-card" style={{ marginBottom: '2rem' }}>
+                    <div style={{ padding: '2rem', background: 'linear-gradient(to right, #1B4D2E, #2D6A3F)', color: 'white' }}>
+                      <span className="badge-desi" style={{ color: 'var(--color-wheat-gold)', background: 'rgba(255,255,255,0.2)', marginBottom: '0.5rem', display: 'inline-block' }}>🌿 Crop Diagnostics</span>
+                      <h1 style={{ color: 'white', fontSize: '2rem' }}>Check Your Plant’s Health</h1>
+                      <p style={{ color: 'rgba(255,255,255,0.9)' }}>Take or upload a clear photo of the affected leaf.</p>
+                    </div>
+                    <form onSubmit={handleDiseaseSubmit} style={{ padding: '2rem' }}>
+                      <div style={{ border: '2px dashed var(--color-cream-border)', borderRadius: 'var(--radius-lg)', padding: '2.5rem', textAlign: 'center', background: 'var(--color-cream-surface)', marginBottom: '1.5rem' }}>
+                        <p style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--color-forest-green-dark)' }}>📷 Upload Plant Leaf Image</p>
+                        <p style={{ fontSize: '0.85rem', color: 'var(--color-charcoal-muted)' }}>Drag & drop or select image from phone gallery</p>
+                        <input type="file" onChange={e => setDiseaseImg(e.target.files[0])} style={{ marginTop: '1rem' }} />
+                      </div>
+                      <button type="submit" className="btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
+                        {diseaseLoading ? 'SCANNING LEAF TEXTURE...' : 'ANALYZE PLANT HEALTH'}
+                      </button>
+                    </form>
+                  </div>
+
+                  {diseaseResults && (
+                    <div className="desi-card" style={{ padding: '2rem' }}>
+                      <span className="badge-desi" style={{ marginBottom: '0.75rem', display: 'inline-block' }}>Match: {diseaseResults.confidence}</span>
+                      <h2 style={{ fontSize: '1.8rem', color: 'var(--color-forest-green-dark)', marginBottom: '1rem' }}>{diseaseResults.status}</h2>
+                      <h4 style={{ marginBottom: '0.5rem' }}>Observed Symptoms:</h4>
+                      <p style={{ marginBottom: '1.5rem', color: 'var(--color-charcoal-muted)' }}>{diseaseResults.symptoms}</p>
+                      <h4 style={{ marginBottom: '0.5rem' }}>Recommended Remedies:</h4>
+                      <pre style={{ fontFamily: 'inherit', whiteSpace: 'pre-wrap', background: 'var(--color-cream-surface)', padding: '1rem', borderRadius: 'var(--radius-md)' }}>{diseaseResults.treatment}</pre>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* PAGE 5: GOVERNMENT SCHEMES */}
+              {activeTab === 'schemes' && (
+                <div>
+                  <div className="desi-card" style={{ marginBottom: '2rem' }}>
+                    <div style={{ padding: '2rem', background: 'linear-gradient(to right, #6E4723, #4F3217)', color: 'white' }}>
+                      <span className="badge-desi" style={{ color: 'var(--color-wheat-gold)', background: 'rgba(255,255,255,0.2)', marginBottom: '0.5rem', display: 'inline-block' }}>🏛️ Subsidies & Benefits</span>
+                      <h1 style={{ color: 'white', fontSize: '2rem' }}>Government Support For Your Farm</h1>
+                      <p style={{ color: 'rgba(255,255,255,0.9)' }}>Find schemes and benefits relevant to your land and crops.</p>
+                    </div>
+                    <form onSubmit={handleSchemeSubmit} style={{ padding: '2rem' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', marginBottom: '1.5rem' }}>
+                        <div>
+                          <label style={{ fontWeight: 700, display: 'block', marginBottom: '0.5rem' }}>State</label>
+                          <select className="form-select" value={schemeState} onChange={e => setSchemeState(e.target.value)}>
+                            <option value="Uttar Pradesh">Uttar Pradesh</option>
+                            <option value="Karnataka">Karnataka</option>
+                            <option value="Punjab">Punjab</option>
+                            <option value="Maharashtra">Maharashtra</option>
+                            <option value="West Bengal">West Bengal</option>
+                          </select>
+                        </div>
+                      </div>
+                      <button type="submit" className="btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
+                        {schemeLoading ? 'SEARCHING GOVT DATABASE...' : 'FIND MY SCHEMES'}
+                      </button>
+                    </form>
+                  </div>
+
+                  {schemeResults && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+                      {schemeResults.map((s, idx) => (
+                        <div key={idx} className="desi-card" style={{ padding: '2rem' }}>
+                          <span className="badge-desi" style={{ marginBottom: '0.5rem', display: 'inline-block' }}>Highly Relevant Scheme</span>
+                          <h3 style={{ fontSize: '1.4rem', color: 'var(--color-forest-green-dark)', marginBottom: '0.5rem' }}>{s.name}</h3>
+                          <p style={{ fontSize: '0.95rem', color: 'var(--color-charcoal-muted)', marginBottom: '1rem' }}>{s.snippet}</p>
+                          <div style={{ background: 'var(--color-cream-surface)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1rem' }}>
+                            <strong>Key Benefit:</strong> {s.benefits}
+                          </div>
+                          <a href={s.site} target="_blank" rel="noreferrer" style={{ color: 'var(--color-forest-green)', fontWeight: 800 }}>Visit Official Portal →</a>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* PAGE 6: DASHBOARD */}
+              {activeTab === 'dashboard' && (
+                <div>
+                  <div className="desi-card" style={{ padding: '2rem', marginBottom: '2rem' }}>
+                    <span className="badge-desi" style={{ marginBottom: '0.5rem', display: 'inline-block' }}>📋 Digital Farm Notebook</span>
+                    <h1 style={{ fontSize: '2.2rem', color: 'var(--color-forest-green-dark)' }}>Namaste, {user ? user.name : 'Farmer'} 👋</h1>
+                    <p style={{ color: 'var(--color-charcoal-muted)' }}>Location: Meerut, Uttar Pradesh | Season: Kharif</p>
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
+                    <div className="desi-card" style={{ padding: '1.75rem' }}>
+                      <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>🌤️ Local Weather</h3>
+                      <p style={{ fontSize: '2.5rem', fontWeight: 800, color: 'var(--color-forest-green-dark)', margin: 0 }}>28°C</p>
+                      <p style={{ color: 'var(--color-charcoal-muted)', margin: 0 }}>Partly Cloudy | 68% Humidity</p>
+                    </div>
+
+                    <div className="desi-card" style={{ padding: '1.75rem' }}>
+                      <h3 style={{ fontSize: '1.1rem', marginBottom: '0.5rem' }}>💡 Today’s Farming Tip</h3>
+                      <p style={{ fontSize: '0.9rem', color: 'var(--color-charcoal)' }}>"During humid overcast days, inspect paddy field borders closely for leaf blast signs."</p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* PAGE 7: ABOUT US */}
+              {activeTab === 'about' && (
+                <div className="desi-card" style={{ padding: '3rem' }}>
+                  <span className="badge-desi" style={{ marginBottom: '0.75rem', display: 'inline-block' }}>Our Purpose</span>
+                  <h1 style={{ fontSize: '2.5rem', color: 'var(--color-forest-green-dark)', marginBottom: '1rem' }}>Built For The People Who Grow Our Food.</h1>
+                  <p style={{ fontSize: '1.1rem', color: 'var(--color-charcoal-muted)', lineHeight: 1.7 }}>
+                    AgriSaarthi bridges traditional field wisdom with verified agricultural science. Designed cleanly for Indian farmers with multi-language support.
+                  </p>
+                </div>
+              )}
+
+              {/* PAGE 8: HELP */}
+              {activeTab === 'help' && (
+                <div className="desi-card" style={{ padding: '3rem' }}>
+                  <h1 style={{ fontSize: '2.2rem', color: 'var(--color-forest-green-dark)', marginBottom: '1rem' }}>Need Help?</h1>
+                  <p style={{ fontSize: '1.1rem', color: 'var(--color-charcoal)', marginBottom: '2rem' }}>📞 Kisan Call Center (Toll-Free): <strong>1800-180-1551</strong></p>
+                </div>
+              )}
+
+              {/* PAGE 9: SIGN IN */}
+              {activeTab === 'signin' && (
+                <div className="desi-card" style={{ padding: '3rem', maxWidth: '480px', margin: '0 auto' }}>
+                  <h2 style={{ fontSize: '1.8rem', color: 'var(--color-forest-green-dark)', marginBottom: '0.5rem' }}>Sign In to AgriSaarthi</h2>
+                  <p style={{ fontSize: '0.9rem', color: 'var(--color-charcoal-muted)', marginBottom: '1.5rem' }}>Access your personalized digital farm notebook.</p>
+                  <form onSubmit={e => { e.preventDefault(); setUser({ name: 'Ramesh Kumar' }); setActiveTab('dashboard'); }}>
+                    <div style={{ marginBottom: '1rem' }}>
+                      <label style={{ fontWeight: 700, display: 'block', marginBottom: '0.35rem' }}>Email / Phone Number</label>
+                      <input type="text" className="form-input" defaultValue="ramesh.farmer@agrisaarthi.in" required />
+                    </div>
+                    <div style={{ marginBottom: '1.5rem' }}>
+                      <label style={{ fontWeight: 700, display: 'block', marginBottom: '0.35rem' }}>Password</label>
+                      <input type="password" className="form-input" defaultValue="••••••••" required />
+                    </div>
+                    <button type="submit" className="btn-primary" style={{ width: '100%', justifyContent: 'center' }}>SIGN IN</button>
+                  </form>
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <footer style={{ background: 'var(--color-cream-surface)', borderTop: '1px solid var(--color-cream-border)', padding: '2.5rem', marginTop: 'auto' }}>
+              <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'flex', flexWrap: 'wrap', justify: 'space-between', gap: '1.5rem' }}>
+                <div>
+                  <h3 style={{ color: 'var(--color-forest-green-dark)', marginBottom: '0.5rem' }}>🌾 AgriSaarthi</h3>
+                  <p style={{ fontSize: '0.9rem', color: 'var(--color-charcoal-muted)' }}>"Technology for Every Farmer. Built with farmers in mind."</p>
+                </div>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  {LANGUAGES.map(l => (
+                    <button key={l.code} onClick={() => setLang(l.code)} style={{ padding: '0.35rem 0.75rem', background: 'white', border: '1px solid var(--color-cream-border)', borderRadius: '4px', fontSize: '0.85rem', fontWeight: 700 }}>
+                      {l.native}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </footer>
+          </main>
+
+          {/* Equal 5-Language Selector Modal */}
+          {isLangOpen && (
+            <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 100 }} onClick={() => setIsLangOpen(false)}>
+              <div style={{ background: 'white', borderRadius: 'var(--radius-lg)', padding: '2rem', width: '90%', maxWidth: '440px' }} onClick={e => e.stopPropagation()}>
+                <h2 style={{ fontSize: '1.35rem', marginBottom: '1rem' }}>🌐 Choose Language / भाषा चुनें</h2>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                  {LANGUAGES.map(l => (
+                    <button key={l.code} onClick={() => { setLang(l.code); setIsLangOpen(false); }} style={{
+                      padding: '0.85rem 1.25rem', borderRadius: 'var(--radius-md)', border: lang === l.code ? '2px solid var(--color-forest-green)' : '1px solid var(--color-cream-border)',
+                      background: lang === l.code ? 'var(--color-leaf-light)' : 'white', textAlign: 'left', fontWeight: 700, fontSize: '1.1rem'
+                    }}>
+                      {l.native} ({l.code.toUpperCase()})
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+  </script>
+</body>
+</html>

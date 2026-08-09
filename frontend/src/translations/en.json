@@ -1,0 +1,147 @@
+{
+  "brand": "AgriSaarthi",
+  "tagline": "Your Farm. Your Future. Your Saarthi.",
+  "subtagline": "Smart farming guidance for crops, plant health and government support — all in one place.",
+  "brandPhrase": "Apni Fasal. Apna Faisla.",
+  "nav": {
+    "home": "HOME",
+    "features": "FEATURES",
+    "about": "ABOUT US",
+    "cropRec": "CROP RECOMMENDATION",
+    "diseaseDet": "DISEASE DETECTION",
+    "govtSchemes": "GOVERNMENT SCHEMES",
+    "help": "HELP & SUPPORT",
+    "dashboard": "DASHBOARD",
+    "language": "Choose Language",
+    "signIn": "Sign In",
+    "getStarted": "GET STARTED",
+    "exploreFeatures": "EXPLORE FEATURES"
+  },
+  "hero": {
+    "badge": "Digital India meets real Indian farming",
+    "title": "Your Farm. Your Future. Your Saarthi.",
+    "subtitle": "Smart farming guidance for crops, plant health and government support — all in one place.",
+    "ctaPrimary": "GET STARTED",
+    "ctaSecondary": "EXPLORE FEATURES"
+  },
+  "slider": {
+    "title": "Agricultural Storytelling",
+    "slide1": {
+      "title": "Know What To Grow",
+      "text": "Find crops suited to your location, season, soil and weather.",
+      "cta": "Explore Crop Recommendation →"
+    },
+    "slide2": {
+      "title": "Farm Smarter",
+      "text": "Make better farming decisions using local conditions and agricultural information.",
+      "cta": "Explore Features →"
+    },
+    "slide3": {
+      "title": "Protect Your Crops",
+      "text": "Upload a plant photo and check for possible diseases.",
+      "cta": "Check Plant Health →"
+    },
+    "slide4": {
+      "title": "Know Your Benefits",
+      "text": "Discover government schemes and support relevant to your farm.",
+      "cta": "Explore Schemes →"
+    }
+  },
+  "journey": {
+    "title": "From Soil to Decision",
+    "step1": "YOUR LAND",
+    "step2": "YOUR WEATHER",
+    "step3": "YOUR CROP",
+    "step4": "YOUR CROP HEALTH",
+    "step5": "YOUR GOVERNMENT SUPPORT"
+  },
+  "getStarted": {
+    "title": "How Can We Help You Today?",
+    "subtitle": "Choose what you need help with.",
+    "opt1": "I want to choose a crop",
+    "opt2": "I want to check my plant",
+    "opt3": "I want to find government schemes"
+  },
+  "dashboard": {
+    "greeting": "Namaste, Farmer 👋",
+    "subheading": "Let's make your next farming decision smarter.",
+    "location": "Current Farm Location",
+    "changeLoc": "Change Location",
+    "updated": "Updated recently",
+    "quickActions": "Quick Actions",
+    "recentActivity": "Recent Activity",
+    "farmingTipTitle": "Today's Farming Tip"
+  },
+  "crop": {
+    "title": "Find the Right Crop for Your Farm",
+    "subtitle": "Tell us where you farm and which season you are planning for.",
+    "locationLabel": "Enter your village, city or district",
+    "locationPlaceholder": "e.g. Meerut, Uttar Pradesh",
+    "useMyLocation": "Use My Location",
+    "seasonLabel": "Cropping Season",
+    "analyzeBtn": "ANALYZE MY FARM",
+    "step1": "Location identified",
+    "step2": "Weather checked",
+    "step3": "Soil conditions checked",
+    "step4": "Farm conditions analyzed",
+    "analyzing": "Finding crops that suit your farm...",
+    "resultsTitle": "Crops That Suit Your Farm",
+    "top3": "Top 3 Recommendations",
+    "whyThisCrop": "Why this crop?",
+    "viewDetails": "View Crop Details →",
+    "lowConfidence": "LOW CONFIDENCE",
+    "lowConfidenceText": "The available model has low confidence for these conditions.",
+    "kbTitle": "Other Crops Supported by Agricultural Knowledge",
+    "noCropFound": "No sufficiently supported crop recommendation was found. Consider checking your soil information or consulting a local agricultural expert."
+  },
+  "disease": {
+    "title": "Check Your Plant's Health",
+    "subtitle": "Take a clear photo of the affected leaf.",
+    "uploadArea": "Upload Plant Image",
+    "dragDrop": "Drag & Drop or Browse",
+    "analyzeBtn": "ANALYZE PLANT",
+    "takePhoto": "Take a Photo",
+    "step1": "Image received",
+    "step2": "Identifying plant",
+    "step3": "Checking for disease",
+    "step4": "Preparing guidance",
+    "resultsTitle": "Plant Health Analysis",
+    "confidence": "Confidence",
+    "lowConfidence": "We're not fully confident about this result. Try uploading a clearer image showing the affected leaves.",
+    "aboutDisease": "About the Disease",
+    "symptoms": "Symptoms",
+    "causes": "Possible Causes",
+    "treatment": "What You Can Do",
+    "prevention": "Prevention"
+  },
+  "schemes": {
+    "title": "Government Support For Your Farm",
+    "subtitle": "Find schemes and benefits that may be relevant to you.",
+    "findBtn": "FIND MY SCHEMES",
+    "resultsTitle": "Support You May Be Eligible For",
+    "highlyRelevant": "Highly Relevant",
+    "whatIsIt": "What is it?",
+    "benefits": "Benefits",
+    "eligibility": "Eligibility",
+    "documents": "Documents Required",
+    "howToApply": "How to Apply",
+    "viewDetails": "View Scheme Details →"
+  },
+  "about": {
+    "title": "Built For The People Who Grow Our Food.",
+    "subtitle": "Connecting traditional farming wisdom with modern digital guidance."
+  },
+  "help": {
+    "title": "Need Help?",
+    "faqTitle": "Frequently Asked Questions"
+  },
+  "signin": {
+    "title": "Sign In to AgriSaarthi",
+    "subtitle": "Access your personalized digital farm notebook.",
+    "emailLabel": "Email / Phone Number",
+    "passwordLabel": "Password",
+    "rememberMe": "Remember Me",
+    "submit": "SIGN IN",
+    "createAccount": "Create Account"
+  }
+}

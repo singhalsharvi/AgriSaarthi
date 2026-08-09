@@ -1,0 +1,60 @@
+:root {
+  /* AgriSaarthi Desi Earthy Palette */
+  --color-forest-green: #1B4D2E;
+  --color-forest-green-dark: #12361F;
+  --color-leaf-green: #2D6A3F;
+  --color-leaf-light: #E8F2EC;
+  
+  --color-mitti-brown: #6E4723;
+  --color-mitti-dark: #4F3217;
+  --color-mitti-light: #F4ECE3;
+  
+  --color-terracotta: #C85A32;
+  --color-terracotta-light: #F9ECE7;
+  
+  --color-mustard: #DA9B26;
+  --color-wheat-gold: #E5B842;
+  --color-wheat-light: #FCF5E3;
+  
+  --color-cream-bg: #FDFBF7;
+  --color-cream-surface: #F6F2EA;
+  --color-cream-border: #E5DDD0;
+  
+  --color-charcoal: #1A1C19;
+  --color-charcoal-muted: #525750;
+  --color-charcoal-light: #80867D;
+  
+  --color-white: #FFFFFF;
+  --color-border-subtle: rgba(110, 71, 35, 0.12);
+  
+  /* Status Colors */
+  --color-success: #2D6A3F;
+  --color-warning: #D9822B;
+  --color-error: #C83232;
+  --color-info: #2B6CB0;
+  
+  /* Typography */
+  --font-primary: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-heading: 'Outfit', 'Hind', 'Noto Sans Devanagari', sans-serif;
+  --font-indic: 'Hind', 'Noto Sans Devanagari', 'Noto Sans Bengali', 'Noto Sans Kannada', sans-serif;
+  
+  /* Spacing & Layout */
+  --sidebar-width: 280px;
+  --header-height-mobile: 64px;
+  --bottom-nav-height: 64px;
+  --radius-sm: 8px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-full: 9999px;
+  
+  /* Shadows */
+  --shadow-sm: 0 2px 6px rgba(27, 77, 46, 0.04);
+  --shadow-md: 0 4px 16px rgba(27, 77, 46, 0.08);
+  --shadow-lg: 0 12px 32px rgba(27, 77, 46, 0.12);
+  --shadow-earthy: 0 8px 24px rgba(110, 71, 35, 0.08);
+  
+  /* Transitions */
+  --transition-fast: 0.15s ease;
+  --transition-normal: 0.25s ease;
+  --transition-bounce: 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
