@@ -3,3 +3,7 @@ __pycache__/
 *.pyc
 *.pyo
 .DS_Store
+PlantDoc-Dataset/
+PlantDoc-Dataset*/
+plantdoc.zip
+temp_*
