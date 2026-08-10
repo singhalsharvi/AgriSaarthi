@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field
 
 from backend.services.rag.crop_retriever import CropRetriever
 from backend.services.rag.gemini_service import GeminiService
+from backend.services.db_service import db_service
 
 router = APIRouter(prefix="/crop", tags=["Crop Recommendation"])
 
@@ -23,6 +24,7 @@ class CropRecommendationRequest(BaseModel):
     Rainfall: Optional[float] = Field(None, description="Optional Rainfall in mm")
     Soil_Type: Optional[str] = Field(None, example="Clay", description="Optional Soil type override")
     user_query: Optional[str] = Field(None, example="What crops are best for my region and how should I cultivate them?")
+    farmer_id: Optional[str] = Field("ramesh.farmer@agrisaarthi.in", description="Farmer ID for logging activity")
 
 
 class RecommendedCropItem(BaseModel):
@@ -42,6 +44,9 @@ class CropRecommendationResponse(BaseModel):
     recommended_crops: List[RecommendedCropItem]
     warning: Optional[str] = None
     explanation: str
+    status: str = "success"
+    top_3_predictions: List[Dict[str, Any]] = []
+    ai_explanation: str = ""
 
 
 @router.post("/recommend", response_model=CropRecommendationResponse)
@@ -90,7 +95,40 @@ def recommend_crop(request: CropRecommendationRequest) -> CropRecommendationResp
             structured_metadata=meta_context,
         )
 
+        # Log activity to SQLite database
+        try:
+            db_service.log_activity(
+                farmer_id=request.farmer_id or "ramesh.farmer@agrisaarthi.in",
+                activity_type="crop_recommendation",
+                details={
+                    "location": location_str,
+                    "season": request.season or "Kharif",
+                    "top_crop": rec_crops[0]["crop"] if rec_crops else "None",
+                    "ml_confidence": f"{ml_conf_val*100:.2f}%",
+                    "recommendation_source": rec_source
+                }
+            )
+        except Exception:
+            pass
+
+        top_3 = []
+        for item in rec_crops:
+            conf_str = item.get("confidence", "0.0%")
+            try:
+                if "%" in conf_str:
+                    val = float(conf_str.replace("%", "").strip()) / 100.0
+                else:
+                    val = float(conf_str.strip())
+            except Exception:
+                val = 0.0
+            top_3.append({
+                "crop": item["crop"],
+                "confidence_score": val,
+                "probability": val
+            })
+
         return CropRecommendationResponse(
+            status="success",
             location=location_str,
             season=request.season or "Kharif",
             soil=soil_str,
@@ -111,8 +149,10 @@ def recommend_crop(request: CropRecommendationRequest) -> CropRecommendationResp
                 )
                 for item in rec_crops
             ],
+            top_3_predictions=top_3,
             warning=warning_msg,
             explanation=ai_explanation,
+            ai_explanation=ai_explanation,
         )
     except Exception as exc:
         raise HTTPException(status_code=500, detail=f"Crop recommendation error: {str(exc)}")

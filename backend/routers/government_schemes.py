@@ -4,6 +4,7 @@ from pydantic import BaseModel, Field
 
 from backend.services.rag.gemini_service import GeminiService
 from backend.services.rag.government_retriever import GovernmentSchemeRetriever
+from backend.services.db_service import db_service
 
 router = APIRouter(prefix="/government-schemes", tags=["Government Schemes"])
 
@@ -21,6 +22,7 @@ class GovernmentSchemeRequest(BaseModel):
     gender: Optional[str] = Field(None, example="male")
     user_query: Optional[str] = Field(None, example="I need financial support for my rice crop.")
     top_k: int = Field(5, ge=1, le=10)
+    farmer_id: Optional[str] = Field("ramesh.farmer@agrisaarthi.in", description="Farmer ID for logging activity")
 
 
 class SchemeDetail(BaseModel):
@@ -92,6 +94,22 @@ def recommend_government_schemes(request: GovernmentSchemeRequest) -> Government
                     snippet=doc.get("document_text", "")[:250].strip() + "...",
                 )
             )
+
+        # Log activity to SQLite database
+        try:
+            db_service.log_activity(
+                farmer_id=request.farmer_id or "ramesh.farmer@agrisaarthi.in",
+                activity_type="scheme_search",
+                details={
+                    "state": request.state or "All",
+                    "crop": request.crop or "All",
+                    "query": request.user_query or "",
+                    "eligible_schemes_count": len(eligible_schemes),
+                    "matched_schemes_count": len(scheme_details)
+                }
+            )
+        except Exception:
+            pass
 
         return GovernmentSchemeResponse(
             status="success",

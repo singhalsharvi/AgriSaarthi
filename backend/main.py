@@ -11,6 +11,7 @@ if str(PROJECT_ROOT) not in sys.path:
 from backend.routers.crop import router as crop_router
 from backend.routers.disease import router as disease_router
 from backend.routers.government_schemes import router as government_schemes_router
+from backend.routers.farmer import router as farmer_router
 
 app = FastAPI(
     title="Crop Recommendation & Agricultural AI Backend API",
@@ -31,6 +32,7 @@ app.add_middleware(
 app.include_router(government_schemes_router)
 app.include_router(crop_router)
 app.include_router(disease_router)
+app.include_router(farmer_router)
 
 
 @app.get("/", tags=["Health Check"])

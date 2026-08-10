@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
+import { apiService } from '../api/client';
 
 const AuthContext = createContext();
 
@@ -8,15 +9,32 @@ export const AuthProvider = ({ children }) => {
     return saved ? JSON.parse(saved) : null;
   });
 
-  const signIn = (userPayload) => {
+  const signIn = async (userPayload) => {
+    const emailOrPhone = userPayload.emailOrPhone || 'ramesh.farmer@agrisaarthi.in';
+    let profile = null;
+    
+    try {
+      profile = await apiService.getFarmerProfile(emailOrPhone);
+    } catch (e) {
+      console.warn("Failed to get profile from backend:", e);
+    }
+
     const farmerUser = {
-      name: userPayload.name || 'Ramesh Kumar',
-      location: userPayload.location || 'Meerut, Uttar Pradesh',
-      emailOrPhone: userPayload.emailOrPhone || 'ramesh.farmer@agrisaarthi.in',
-      landholding: '2.5 Acres',
-      soilType: 'Alluvial Soil',
+      name: profile?.name || userPayload.name || 'Ramesh Kumar',
+      location: profile?.location || userPayload.location || 'Meerut, Uttar Pradesh',
+      emailOrPhone: emailOrPhone,
+      landholding: profile?.land_size || userPayload.landholding || '2.5 Acres',
+      soilType: profile?.soil_type || userPayload.soilType || 'Alluvial Soil',
       signedInAt: new Date().toISOString()
     };
+
+    // Sync to backend database
+    try {
+      await apiService.saveFarmerProfile(farmerUser);
+    } catch (e) {
+      console.warn("Failed to save profile on backend:", e);
+    }
+
     setUser(farmerUser);
     localStorage.setItem('agri_user', JSON.stringify(farmerUser));
   };

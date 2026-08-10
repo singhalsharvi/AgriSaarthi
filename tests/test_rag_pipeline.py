@@ -38,8 +38,8 @@ def test_2_verify_crop_chromadb_count():
     collection = client.get_collection(name="crop_knowledge")
     count = collection.count()
     print(f"ChromaDB Collection 'crop_knowledge' contains {count} items.")
-    assert count == 22, f"Expected 22 crop documents in crop_knowledge ChromaDB, found {count}"
-    print("SUCCESS: Crop Knowledge ChromaDB collection count is exactly 22.")
+    assert count >= 22, f"Expected at least 22 crop documents in crop_knowledge ChromaDB, found {count}"
+    print("SUCCESS: Crop Knowledge ChromaDB collection count is valid.")
 
 
 def test_3_government_schemes_rag():

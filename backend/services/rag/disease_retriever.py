@@ -1,29 +1,27 @@
 from typing import Any, Dict
 from backend.services.rag.base_retriever import BaseRetriever
+from ai.disease_detection.scripts.retrieve_disease_knowledge import retrieve_disease_knowledge
 
 
 class DiseaseRetriever(BaseRetriever):
-    """Clean placeholder retriever for Disease Detection & Recommendation RAG integration."""
+    """Real retriever for Disease Detection & Recommendation RAG integration using ChromaDB."""
 
     def retrieve(self, query: str = "", **kwargs: Any) -> Dict[str, Any]:
-        """Placeholder retrieval for disease detection context."""
-        evidence_text = (
-            f"Disease Detection & Treatment (Placeholder Context):\n"
-            f"Query: {query or 'General disease inquiry'}\n"
-            f"Note: Disease detection vision model and vector index are undergoing integration."
+        """Query disease ChromaDB collection using crop, disease, and search query."""
+        crop_name = kwargs.get("crop_name") or ""
+        disease_name = kwargs.get("disease_name") or ""
+        top_k = kwargs.get("top_k") or 4
+
+        retrieved_docs = retrieve_disease_knowledge(
+            crop_name=crop_name,
+            disease_name=disease_name,
+            query=query,
+            top_k=top_k
         )
 
-        retrieved_docs = [
-            {
-                "scheme_name": "Disease Identification Placeholder",
-                "source_file": "ai/disease/placeholder",
-                "official_website": "",
-                "document_text": evidence_text,
-                "distance": 0.0,
-            }
-        ]
+        disease_status = f"{crop_name} — {disease_name}" if crop_name and disease_name else "Unknown Plant Disease"
 
         return {
-            "disease_status": "placeholder",
+            "disease_status": disease_status,
             "retrieved_docs": retrieved_docs,
         }
