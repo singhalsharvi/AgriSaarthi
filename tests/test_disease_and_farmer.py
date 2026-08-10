@@ -142,9 +142,10 @@ class TestDiseaseAndFarmerPipeline(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         res_json = res.json()
         self.assertEqual(res_json["status"], "success")
-        self.assertEqual(res_json["crop"], "Pepper bell")
-        self.assertEqual(res_json["disease"], "Bacterial Spot")
-        self.assertIn("ai_explanation", res_json)
+        self.assertEqual(res_json["disease_status"], "No Image Uploaded")
+        self.assertEqual(res_json["crop"], "Unknown")
+        self.assertEqual(res_json["disease"], "None")
+        self.assertIn("Please upload a plant leaf image", res_json["ai_explanation"])
         print("SUCCESS: JSON text-only diagnostics endpoint verified successfully.")
 
     def test_8_api_endpoint_disease_multipart(self):

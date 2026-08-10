@@ -1,26 +1,21 @@
 import React, { useState } from 'react';
-import { Search, Filter } from 'lucide-react';
+import { Search } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 
 export const SchemeFilters = ({ onSearch, isLoading }) => {
   const { t } = useLanguage();
-  const [state, setState] = useState('Uttar Pradesh');
-  const [crop, setCrop] = useState('Rice');
+  const [location, setLocation] = useState('');
+  const [annualIncome, setAnnualIncome] = useState('');
+  const [gender, setGender] = useState('prefer_not_to_say');
   const [landholding, setLandholding] = useState('1.5');
-  const [category, setCategory] = useState('Small and marginal farmer families');
-
-  const indianStates = [
-    'Uttar Pradesh', 'Punjab', 'Haryana', 'Karnataka', 'Maharashtra', 
-    'West Bengal', 'Madhya Pradesh', 'Bihar', 'Rajasthan', 'Tamil Nadu', 'Gujarat'
-  ];
 
   const handleSubmit = (e) => {
     e.preventDefault();
     onSearch({
-      state,
-      crop,
+      location: location.trim(),
+      annualIncome,
+      gender,
       landholding,
-      farmerCategory: category
     });
   };
 
@@ -72,45 +67,52 @@ export const SchemeFilters = ({ onSearch, isLoading }) => {
           marginBottom: '1.5rem'
         }}>
           <div>
-            <label className="form-label">State</label>
-            <select className="form-select" value={state} onChange={e => setState(e.target.value)}>
-              {indianStates.map(s => (
-                <option key={s} value={s}>{s}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="form-label">Crop Type</label>
+            <label className="form-label">Farmer&apos;s Location</label>
             <input
               type="text"
               className="form-input"
-              value={crop}
-              onChange={e => setCrop(e.target.value)}
-              placeholder="e.g. Rice, Wheat, Sugarcane"
+              value={location}
+              onChange={e => setLocation(e.target.value)}
+              placeholder="Village/City, State (e.g. Meerut, Uttar Pradesh)"
+              required
             />
           </div>
 
           <div>
-            <label className="form-label">Landholding (Acres/Ha)</label>
+            <label className="form-label">Annual Farmer Income (₹)</label>
             <input
               type="number"
+              min="0"
+              step="1"
+              className="form-input"
+              value={annualIncome}
+              onChange={e => setAnnualIncome(e.target.value)}
+              placeholder="e.g. 120000"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="form-label">Gender</label>
+            <select className="form-select" value={gender} onChange={e => setGender(e.target.value)}>
+              <option value="male">Male</option>
+              <option value="female">Female</option>
+              <option value="prefer_not_to_say">Prefer not to say</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="form-label">Land Size (Hectares)</label>
+            <input
+              type="number"
+              min="0"
               step="0.1"
               className="form-input"
               value={landholding}
               onChange={e => setLandholding(e.target.value)}
               placeholder="e.g. 1.5"
+              required
             />
-          </div>
-
-          <div>
-            <label className="form-label">Farmer Category</label>
-            <select className="form-select" value={category} onChange={e => setCategory(e.target.value)}>
-              <option value="Small and marginal farmer families">Small & Marginal (&lt;2 Ha)</option>
-              <option value="Medium farmer">Medium Farmer (2-5 Ha)</option>
-              <option value="Large landholding farmer">Large Landholding (&gt;5 Ha)</option>
-              <option value="Tenant farmer / Sharecropper">Tenant Farmer / Sharecropper</option>
-            </select>
           </div>
         </div>
 

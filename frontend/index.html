@@ -71,6 +71,7 @@
 
   <script type="text/babel">
     const { useState, useEffect } = React;
+    const API_BASE_URL = `http://${window.location.hostname || '127.0.0.1'}:8000`;
 
     const TRANSLATIONS = {
       en: {
@@ -189,20 +190,26 @@
       const [cropSeason, setCropSeason] = useState('Kharif');
       const [cropResults, setCropResults] = useState(null);
       const [cropLoading, setCropLoading] = useState(false);
+      const [cropError, setCropError] = useState('');
 
       // Disease State
       const [diseaseImg, setDiseaseImg] = useState(null);
       const [diseaseLoading, setDiseaseLoading] = useState(false);
       const [diseaseResults, setDiseaseResults] = useState(null);
+      const [diseaseError, setDiseaseError] = useState('');
 
       // Schemes State
-      const [schemeState, setSchemeState] = useState('Uttar Pradesh');
+      const [schemeLocation, setSchemeLocation] = useState('');
+      const [schemeAnnualIncome, setSchemeAnnualIncome] = useState('');
+      const [schemeGender, setSchemeGender] = useState('prefer_not_to_say');
+      const [schemeLandholding, setSchemeLandholding] = useState('1.5');
       const [schemeResults, setSchemeResults] = useState(null);
       const [schemeLoading, setSchemeLoading] = useState(false);
+      const [schemeError, setSchemeError] = useState('');
 
       const t = (key) => (TRANSLATIONS[lang] && TRANSLATIONS[lang][key]) || TRANSLATIONS.en[key] || key;
 
-      const handleCropSubmit = (e) => {
+      const handleMockCropSubmit = (e) => {
         e.preventDefault();
         setCropLoading(true);
         setCropResults(null);
@@ -222,7 +229,54 @@
         }, 1500);
       };
 
-      const handleDiseaseSubmit = (e) => {
+      const handleCropSubmit = async (e) => {
+        e.preventDefault();
+        const location = cropLoc.trim();
+        if (!location) {
+          setCropError('Please enter your village, city, or district.');
+          return;
+        }
+
+        setCropLoading(true);
+        setCropResults(null);
+        setCropError('');
+        try {
+          const response = await fetch(`${API_BASE_URL}/crop/recommend`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              location,
+              season: cropSeason,
+              user_query: `Recommend crops for ${location} during ${cropSeason} based on local weather and soil.`
+            })
+          });
+          const payload = await response.json();
+          if (!response.ok) throw new Error(payload.detail || `Server returned HTTP ${response.status}`);
+          if (!payload.recommended_crops?.length) {
+            throw new Error(payload.warning || 'No suitable crops were found for these conditions.');
+          }
+          setCropResults({
+            location: payload.location,
+            season: payload.season,
+            soil: payload.soil,
+            source: payload.recommendation_source,
+            warning: payload.warning,
+            explanation: payload.ai_explanation || payload.explanation,
+            crops: payload.recommended_crops.map(crop => ({
+              name: crop.crop,
+              confidence: crop.confidence,
+              reason: crop.reason,
+              source: crop.source
+            }))
+          });
+        } catch (error) {
+          setCropError(`Crop recommendation failed: ${error.message}`);
+        } finally {
+          setCropLoading(false);
+        }
+      };
+
+      const handleMockDiseaseSubmit = (e) => {
         e.preventDefault();
         setDiseaseLoading(true);
         setDiseaseResults(null);
@@ -242,18 +296,93 @@
         }, 1500);
       };
 
-      const handleSchemeSubmit = (e) => {
+      const handleDiseaseSubmit = async (e) => {
         e.preventDefault();
+        if (!diseaseImg) {
+          setDiseaseError('Please select a clear plant-leaf image first.');
+          return;
+        }
+        if (!['image/jpeg', 'image/png', 'image/webp'].includes(diseaseImg.type)) {
+          setDiseaseError('Please select a JPG, PNG, or WEBP image.');
+          return;
+        }
+        if (diseaseImg.size > 10 * 1024 * 1024) {
+          setDiseaseError('Please select an image smaller than 10 MB.');
+          return;
+        }
+
+        setDiseaseLoading(true);
+        setDiseaseResults(null);
+        setDiseaseError('');
+        const formData = new FormData();
+        formData.append('image', diseaseImg, diseaseImg.name);
+
+        try {
+          const response = await fetch(`${API_BASE_URL}/disease/analyze`, {
+            method: 'POST',
+            body: formData
+          });
+          const payload = await response.json();
+          if (!response.ok) throw new Error(payload.detail || `Server returned HTTP ${response.status}`);
+          setDiseaseResults({
+            status: payload.disease_status,
+            confidence: payload.confidence,
+            symptoms: payload.confidence_status === 'low'
+              ? 'The model could not identify this image with enough confidence.'
+              : 'See the verified advisory below for symptoms and management guidance.',
+            treatment: payload.ai_explanation || 'Verified information is not available for this result.'
+          });
+        } catch (error) {
+          setDiseaseError(`Disease analysis failed: ${error.message}`);
+        } finally {
+          setDiseaseLoading(false);
+        }
+      };
+
+      const handleSchemeSubmit = async (e) => {
+        e.preventDefault();
+        const location = schemeLocation.trim();
+        const annualIncome = Number.parseFloat(schemeAnnualIncome);
+        const landholding = Number.parseFloat(schemeLandholding);
+        if (!location || !Number.isFinite(annualIncome) || annualIncome < 0 || !Number.isFinite(landholding) || landholding < 0) {
+          setSchemeError('Please enter a location, a valid annual income, and a valid land size.');
+          return;
+        }
         setSchemeLoading(true);
         setSchemeResults(null);
-        setTimeout(() => {
+        setSchemeError('');
+        try {
+          const response = await fetch(`${API_BASE_URL}/government-schemes/recommend`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              location,
+              annual_income: annualIncome,
+              landholding,
+              gender: schemeGender,
+              top_k: 5,
+              user_query: `Find suitable government schemes for a ${schemeGender.replaceAll('_', ' ')} farmer in ${location} with annual income of Rs. ${annualIncome} and ${landholding} hectares of land.`
+            })
+          });
+          const payload = await response.json();
+          if (!response.ok) throw new Error(payload.detail || `Server returned HTTP ${response.status}`);
+          setSchemeResults({
+            schemes: payload.recommended_schemes || [],
+            explanation: payload.ai_explanation || 'Recommendations were generated from your submitted profile.'
+          });
+        } catch (error) {
+          setSchemeError(`Scheme recommendation failed: ${error.message}`);
+        } finally {
+          setSchemeLoading(false);
+        }
+        if (false) {
           setSchemeResults([
             { name: "PM-KISAN (Pradhan Mantri Kisan Samman Nidhi)", snippet: "Direct financial support of ₹6,000 per year in 3 equal installments to small & marginal landholding farmers.", site: "https://pmkisan.gov.in", benefits: "₹6,000 / year direct bank transfer" },
             { name: "Pradhan Mantri Fasal Bima Yojana (PMFBY)", snippet: "Comprehensive crop loss insurance against drought, flood, pests and disease outbreaks with low premium rates.", site: "https://pmfby.gov.in", benefits: "1.5% Rabi / 2% Kharif premium coverage" },
             { name: "Kisan Credit Card (KCC) Scheme", snippet: "Provides timely institutional credit at subsidized interest rate of 4% per annum for seeds & fertilizers.", site: "https://kcc.gov.in", benefits: "Subsidized loan up to ₹3 Lakhs at 4%" }
           ]);
           setSchemeLoading(false);
-        }, 1200);
+        }
       };
 
       return (
@@ -449,17 +578,26 @@
                     </form>
                   </div>
 
+                  {cropError && <div role="alert" style={{ marginBottom: '1.5rem', padding: '1rem 1.25rem', borderRadius: 'var(--radius-md)', background: 'var(--color-terracotta-light)', color: 'var(--color-terracotta)', border: '1px solid var(--color-terracotta)' }}>{cropError}</div>}
+
                   {cropResults && (
                     <div>
                       <h2 style={{ fontSize: '1.6rem', marginBottom: '1.25rem' }}>Top 3 Recommended Crops</h2>
+                      <div className="desi-card" style={{ padding: '1.25rem', marginBottom: '1.5rem' }}>
+                        <strong>{cropResults.location}</strong> · {cropResults.season} · {cropResults.soil}
+                        <div style={{ fontSize: '0.9rem', color: 'var(--color-charcoal-muted)', marginTop: '0.5rem' }}>Recommendation source: {cropResults.source}</div>
+                        {cropResults.warning && <p style={{ color: 'var(--color-terracotta)', margin: '0.75rem 0 0' }}>{cropResults.warning}</p>}
+                        {cropResults.explanation && <p style={{ whiteSpace: 'pre-wrap', margin: '0.75rem 0 0' }}>{cropResults.explanation}</p>}
+                      </div>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
                         {cropResults.crops.map((c, idx) => (
                           <div key={idx} className="desi-card" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))' }}>
-                            <div style={{ minHeight: '220px', background: `url('${c.img}') center/cover no-repeat` }} />
+                            <div style={{ minHeight: '220px', display: 'grid', placeItems: 'center', background: 'var(--color-cream-surface)', fontSize: '5rem' }}>🌾</div>
                             <div style={{ padding: '1.75rem' }}>
                               <span className="badge-desi" style={{ marginBottom: '0.5rem', display: 'inline-block' }}>#{idx+1} Match — {c.confidence}</span>
-                              <h3 style={{ fontSize: '1.6rem', color: 'var(--color-forest-green-dark)', marginBottom: '0.5rem' }}>{c.name}</h3>
-                              <p style={{ fontSize: '0.95rem', color: 'var(--color-charcoal-muted)' }}>{c.reason}</p>
+                               <h3 style={{ fontSize: '1.6rem', color: 'var(--color-forest-green-dark)', marginBottom: '0.5rem' }}>{c.name}</h3>
+                               <p style={{ fontSize: '0.95rem', color: 'var(--color-charcoal-muted)' }}>{c.reason}</p>
+                               <p style={{ fontSize: '0.82rem', color: 'var(--color-charcoal-muted)', marginBottom: 0 }}>Source: {c.source}</p>
                             </div>
                           </div>
                         ))}
@@ -482,7 +620,9 @@
                       <div style={{ border: '2px dashed var(--color-cream-border)', borderRadius: 'var(--radius-lg)', padding: '2.5rem', textAlign: 'center', background: 'var(--color-cream-surface)', marginBottom: '1.5rem' }}>
                         <p style={{ fontSize: '1.1rem', fontWeight: 700, color: 'var(--color-forest-green-dark)' }}>📷 Upload Plant Leaf Image</p>
                         <p style={{ fontSize: '0.85rem', color: 'var(--color-charcoal-muted)' }}>Drag & drop or select image from phone gallery</p>
-                        <input type="file" onChange={e => setDiseaseImg(e.target.files[0])} style={{ marginTop: '1rem' }} />
+                        <input type="file" accept="image/jpeg,image/png,image/webp" onChange={e => { setDiseaseImg(e.target.files[0] || null); setDiseaseError(''); }} style={{ marginTop: '1rem' }} />
+                        {diseaseImg && <p style={{ fontSize: '0.85rem', color: 'var(--color-forest-green)', marginTop: '0.75rem' }}>Selected: {diseaseImg.name}</p>}
+                        {diseaseError && <p role="alert" style={{ color: 'var(--color-terracotta)', marginTop: '0.75rem' }}>{diseaseError}</p>}
                       </div>
                       <button type="submit" className="btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
                         {diseaseLoading ? 'SCANNING LEAF TEXTURE...' : 'ANALYZE PLANT HEALTH'}
@@ -510,19 +650,29 @@
                     <div style={{ padding: '2rem', background: 'linear-gradient(to right, #6E4723, #4F3217)', color: 'white' }}>
                       <span className="badge-desi" style={{ color: 'var(--color-wheat-gold)', background: 'rgba(255,255,255,0.2)', marginBottom: '0.5rem', display: 'inline-block' }}>🏛️ Subsidies & Benefits</span>
                       <h1 style={{ color: 'white', fontSize: '2rem' }}>Government Support For Your Farm</h1>
-                      <p style={{ color: 'rgba(255,255,255,0.9)' }}>Find schemes and benefits relevant to your land and crops.</p>
+                      <p style={{ color: 'rgba(255,255,255,0.9)' }}>Find schemes and benefits matched to your profile.</p>
                     </div>
                     <form onSubmit={handleSchemeSubmit} style={{ padding: '2rem' }}>
                       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '1.25rem', marginBottom: '1.5rem' }}>
                         <div>
-                          <label style={{ fontWeight: 700, display: 'block', marginBottom: '0.5rem' }}>State</label>
-                          <select className="form-select" value={schemeState} onChange={e => setSchemeState(e.target.value)}>
-                            <option value="Uttar Pradesh">Uttar Pradesh</option>
-                            <option value="Karnataka">Karnataka</option>
-                            <option value="Punjab">Punjab</option>
-                            <option value="Maharashtra">Maharashtra</option>
-                            <option value="West Bengal">West Bengal</option>
+                          <label style={{ fontWeight: 700, display: 'block', marginBottom: '0.5rem' }}>Farmer's Location</label>
+                          <input type="text" className="form-input" value={schemeLocation} onChange={e => setSchemeLocation(e.target.value)} placeholder="Village/City, State" required />
+                        </div>
+                        <div>
+                          <label style={{ fontWeight: 700, display: 'block', marginBottom: '0.5rem' }}>Annual Farmer Income (Rs.)</label>
+                          <input type="number" min="0" step="1" className="form-input" value={schemeAnnualIncome} onChange={e => setSchemeAnnualIncome(e.target.value)} placeholder="e.g. 120000" required />
+                        </div>
+                        <div>
+                          <label style={{ fontWeight: 700, display: 'block', marginBottom: '0.5rem' }}>Gender</label>
+                          <select className="form-select" value={schemeGender} onChange={e => setSchemeGender(e.target.value)}>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                            <option value="prefer_not_to_say">Prefer not to say</option>
                           </select>
+                        </div>
+                        <div>
+                          <label style={{ fontWeight: 700, display: 'block', marginBottom: '0.5rem' }}>Land Size (Hectares)</label>
+                          <input type="number" min="0" step="0.1" className="form-input" value={schemeLandholding} onChange={e => setSchemeLandholding(e.target.value)} placeholder="e.g. 1.5" required />
                         </div>
                       </div>
                       <button type="submit" className="btn-primary" style={{ width: '100%', justifyContent: 'center' }}>
@@ -531,15 +681,18 @@
                     </form>
                   </div>
 
+                  {schemeError && <div role="alert" style={{ marginBottom: '1.5rem', padding: '1rem 1.25rem', borderRadius: 'var(--radius-md)', background: 'var(--color-terracotta-light)', color: 'var(--color-terracotta)', border: '1px solid var(--color-terracotta)' }}>{schemeError}</div>}
+
                   {schemeResults && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                      {schemeResults.map((s, idx) => (
+                      <div className="desi-card" style={{ padding: '1.25rem', whiteSpace: 'pre-wrap', color: 'var(--color-charcoal-muted)' }}>{schemeResults.explanation}</div>
+                      {schemeResults.schemes.map((s, idx) => (
                         <div key={idx} className="desi-card" style={{ padding: '2rem' }}>
                           <span className="badge-desi" style={{ marginBottom: '0.5rem', display: 'inline-block' }}>Highly Relevant Scheme</span>
-                          <h3 style={{ fontSize: '1.4rem', color: 'var(--color-forest-green-dark)', marginBottom: '0.5rem' }}>{s.name}</h3>
+                          <h3 style={{ fontSize: '1.4rem', color: 'var(--color-forest-green-dark)', marginBottom: '0.5rem' }}>{s.scheme_name}</h3>
                           <p style={{ fontSize: '0.95rem', color: 'var(--color-charcoal-muted)', marginBottom: '1rem' }}>{s.snippet}</p>
                           <div style={{ background: 'var(--color-cream-surface)', padding: '1rem', borderRadius: 'var(--radius-md)', marginBottom: '1rem' }}>
-                            <strong>Key Benefit:</strong> {s.benefits}
+                            <strong>Source:</strong> {s.source_file || 'Official government scheme information'}
                           </div>
                           <a href={s.site} target="_blank" rel="noreferrer" style={{ color: 'var(--color-forest-green)', fontWeight: 800 }}>Visit Official Portal →</a>
                         </div>

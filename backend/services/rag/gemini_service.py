@@ -155,5 +155,41 @@ class GeminiService:
                 f"{kb_str}\n\n"
                 f"> **Note**: Set `GEMINI_API_KEY` in `.env` file to enable full AI-synthesized custom advice."
             )
+        elif domain == "disease_detection":
+            meta = structured_metadata or {}
+            disease_status = meta.get("disease_status") or "Unknown Disease"
+            confidence_pct = meta.get("confidence_pct") or "0.00%"
+            is_low = meta.get("is_low_confidence") or False
+            
+            doc_items = []
+            for doc in retrieved_docs:
+                title = doc.get("scheme_name") or "Disease Knowledge Document"
+                text = doc.get("document_text") or ""
+                doc_items.append(f"### {title}\n{text}")
+            
+            kb_str = "\n\n".join(doc_items) if doc_items else "No detailed knowledge base documents found for this disease."
+            
+            if is_low:
+                return (
+                    f"## Disease Detection Advisory (Low Confidence)\n\n"
+                    f"The visual analysis returned a low confidence match for: **{disease_status}** ({confidence_pct}).\n\n"
+                    f"### Important Advisory for Farmers:\n"
+                    f"- The system is uncertain about the diagnosis. We strongly advise uploading a clearer, well-lit photo of the leaf symptoms.\n"
+                    f"- General good practices: ensure proper spacing for airflow, avoid overhead watering, and remove diseased foliage.\n"
+                    f"- Please consult a local agricultural extension officer before applying chemical treatments.\n\n"
+                    f"## Diagnostic Knowledge Reference:\n\n"
+                    f"{kb_str}\n\n"
+                    f"> **Note**: Set a valid `GEMINI_API_KEY` in your `.env` file to enable customized AI-synthesized advising."
+                )
+            else:
+                return (
+                    f"## Disease Detection Advisory\n\n"
+                    f"### Diagnosis:\n"
+                    f"- **Status**: {disease_status}\n"
+                    f"- **Model Confidence**: {confidence_pct}\n\n"
+                    f"## Verified Disease Knowledge & Treatment Protocols:\n\n"
+                    f"{kb_str}\n\n"
+                    f"> **Note**: Set a valid `GEMINI_API_KEY` in your `.env` file to enable customized AI-synthesized advising."
+                )
         else:
             return f"Retrieved {len(retrieved_docs)} context documents for '{domain}'."

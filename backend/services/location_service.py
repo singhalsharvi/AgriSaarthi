@@ -8,6 +8,46 @@ LOG = logging.getLogger("location_service")
 
 OPEN_METEO_GEOCODING_URL = "https://geocoding-api.open-meteo.com/v1/search"
 
+# Enables meaningful, location-specific recommendations when a device is offline
+# or the geocoding provider is temporarily unavailable.  Coordinates are state
+# reference points, not a claim that the entered village is the state capital.
+OFFLINE_STATE_LOCATIONS = {
+    "andhra pradesh": (15.9129, 79.7400),
+    "gujarat": (22.2587, 71.1924),
+    "karnataka": (15.3173, 75.7139),
+    "madhya pradesh": (22.9734, 78.6569),
+    "maharashtra": (19.7515, 75.7139),
+    "punjab": (31.1471, 75.3412),
+    "rajasthan": (27.0238, 74.2179),
+    "tamil nadu": (11.1271, 78.6569),
+    "telangana": (18.1124, 79.0193),
+    "uttar pradesh": (26.8467, 80.9462),
+    "west bengal": (22.9868, 87.8550),
+}
+
+
+def offline_location_fallback(location_name: str) -> Dict[str, Any]:
+    """Return a state-aware fallback instead of one identical India location."""
+    normalized = location_name.casefold()
+    for state, (latitude, longitude) in OFFLINE_STATE_LOCATIONS.items():
+        if state in normalized:
+            return {
+                "latitude": latitude,
+                "longitude": longitude,
+                "name": location_name,
+                "state": state.title(),
+                "country": "India",
+                "is_fallback": True,
+            }
+    return {
+        "latitude": 20.5937,
+        "longitude": 78.9629,
+        "name": location_name,
+        "state": "India",
+        "country": "India",
+        "is_fallback": True,
+    }
+
 
 def resolve_location(location_name: str) -> Dict[str, Any]:
     """Resolve location string (e.g. 'Mandya, Karnataka' or 'Ludhiana, Punjab') to latitude, longitude, and administrative state using Open-Meteo Geocoding API.
@@ -45,14 +85,7 @@ def resolve_location(location_name: str) -> Dict[str, Any]:
 
         if not results:
             LOG.warning("Location '%s' could not be resolved via Open-Meteo. Using fallback coordinates.", location_name)
-            return {
-                "latitude": 20.5937,
-                "longitude": 78.9629,
-                "name": location_name,
-                "state": "India",
-                "country": "India",
-                "is_fallback": True,
-            }
+            return offline_location_fallback(location_name)
 
         top_match = results[0]
         state = top_match.get("admin1") or top_match.get("admin2") or top_match.get("name") or "India"
@@ -68,11 +101,4 @@ def resolve_location(location_name: str) -> Dict[str, Any]:
         }
     except Exception as exc:
         LOG.error("Error connecting to Open-Meteo Geocoding API: %s. Using default India coordinates.", exc)
-        return {
-            "latitude": 20.5937,
-            "longitude": 78.9629,
-            "name": location_name,
-            "state": "India",
-            "country": "India",
-            "is_fallback": True,
-        }
+        return offline_location_fallback(location_name)

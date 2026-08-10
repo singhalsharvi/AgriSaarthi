@@ -1,6 +1,7 @@
 import os
 import sys
 import json
+import math
 import torch
 import torch.nn as nn
 import torchvision.models as models
@@ -16,8 +17,10 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODEL_PATH = os.path.join(BASE_DIR, "model", "model.pth")
 METADATA_PATH = os.path.join(BASE_DIR, "model", "metadata.json")
 
-# Classes list in alphabetical order (as verified during evaluation)
-CLASSES = [
+# Fallback for older model artifacts.  The checkpoint metadata is the source of
+# truth and is loaded below so a future re-trained model cannot silently be
+# decoded with the wrong label order.
+DEFAULT_CLASSES = [
     "Pepper__bell___Bacterial_spot",
     "Pepper__bell___healthy",
     "Potato___Early_blight",
@@ -35,16 +38,49 @@ CLASSES = [
     "Tomato_healthy"
 ]
 
-# Normalization constants (ImageNet standards, 128x128 resolution)
-IMG_SIZE = (128, 128)
-INFERENCE_TRANSFORM = transforms.Compose([
-    transforms.Resize(IMG_SIZE),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
-])
-
 # Global instances for fast API warm-start
 _model = None
+_metadata = None
+
+
+def load_metadata() -> dict:
+    """Load and validate the training metadata shipped with the checkpoint."""
+    global _metadata
+    if _metadata is not None:
+        return _metadata
+
+    metadata = {}
+    if os.path.exists(METADATA_PATH):
+        with open(METADATA_PATH, "r", encoding="utf-8") as handle:
+            metadata = json.load(handle)
+
+    classes = metadata.get("classes", DEFAULT_CLASSES)
+    if not isinstance(classes, list) or not classes or not all(isinstance(item, str) for item in classes):
+        raise ValueError("Disease model metadata has an invalid 'classes' list.")
+
+    preprocessing = metadata.get("preprocessing", {})
+    image_size = preprocessing.get("image_size", [128, 128])
+    normalization = preprocessing.get("normalization", {})
+    mean = normalization.get("mean", [0.485, 0.456, 0.406])
+    std = normalization.get("std", [0.229, 0.224, 0.225])
+    if len(image_size) != 2 or len(mean) != 3 or len(std) != 3:
+        raise ValueError("Disease model metadata has invalid preprocessing settings.")
+
+    _metadata = {
+        "classes": classes,
+        "image_size": tuple(int(value) for value in image_size),
+        "mean": [float(value) for value in mean],
+        "std": [float(value) for value in std],
+    }
+    return _metadata
+
+
+def build_inference_transform(metadata: dict):
+    return transforms.Compose([
+        transforms.Resize(metadata["image_size"]),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=metadata["mean"], std=metadata["std"]),
+    ])
 
 def load_model():
     """Loads and caches the trained PyTorch MobileNetV2 model."""
@@ -55,7 +91,8 @@ def load_model():
     if not os.path.exists(MODEL_PATH):
         raise FileNotFoundError(f"Trained model checkpoint not found at: {MODEL_PATH}")
 
-    num_classes = len(CLASSES)
+    metadata = load_metadata()
+    num_classes = len(metadata["classes"])
 
     # Rebuild MobileNetV2 architecture
     try:
@@ -87,16 +124,17 @@ def parse_class_name(class_name: str):
     if "___" in class_name:
         crop_raw, disease_raw = class_name.split("___", 1)
     else:
-        parts = class_name.split("_")
-        if len(parts) >= 2:
-            crop_raw = parts[0]
-            disease_raw = "_".join(parts[1:])
+        # PlantVillage uses both Tomato_Early_blight and Tomato__Target_Spot.
+        # Split only at the crop boundary, then trim the separator run.
+        if "_" in class_name:
+            crop_raw, disease_raw = class_name.split("_", 1)
+            disease_raw = disease_raw.lstrip("_")
         else:
             crop_raw = class_name
             disease_raw = "healthy"
 
-    crop = crop_raw.replace("__", " ").replace("_", " ").title()
-    disease = disease_raw.replace("_", " ").title()
+    crop = " ".join(crop_raw.replace("_", " ").split()).title()
+    disease = " ".join(disease_raw.replace("_", " ").split()).title()
 
     # Special cleanups
     if crop == "Pepper Bell":
@@ -117,14 +155,20 @@ def predict_disease(image_pil: Image.Image) -> dict:
     Returns:
         Dict containing top predictions and probabilities.
     """
+    if not isinstance(image_pil, Image.Image):
+        raise TypeError("A decoded PIL image is required for disease prediction.")
+    if image_pil.width < 64 or image_pil.height < 64:
+        raise ValueError("Image is too small. Upload a clear leaf photo at least 64×64 pixels.")
+
     model = load_model()
+    metadata = load_metadata()
 
     # Ensure RGB format
     if image_pil.mode != "RGB":
         image_pil = image_pil.convert("RGB")
 
     # Preprocess image
-    tensor_img = INFERENCE_TRANSFORM(image_pil).unsqueeze(0) # Add batch dimension
+    tensor_img = build_inference_transform(metadata)(image_pil).unsqueeze(0)
 
     with torch.no_grad():
         outputs = model(tensor_img)
@@ -135,7 +179,7 @@ def predict_disease(image_pil: Image.Image) -> dict:
 
     top_3_predictions = []
     for prob, idx in zip(top_probs.tolist(), top_indices.tolist()):
-        cls_name = CLASSES[idx]
+        cls_name = metadata["classes"][idx]
         crp, dis = parse_class_name(cls_name)
         top_3_predictions.append({
             "class_name": cls_name,
@@ -144,7 +188,15 @@ def predict_disease(image_pil: Image.Image) -> dict:
             "confidence": round(prob, 4)
         })
 
+    # Expose entropy for diagnostics. A softmax classifier is forced to choose
+    # one of its trained classes even for an unsupported crop, so its top label
+    # alone must not be treated as a diagnosis.
+    entropy = -sum(float(prob) * math.log(float(prob) + 1e-12) for prob in probs.tolist())
+    normalized_entropy = entropy / math.log(len(metadata["classes"]))
+
     return {
         "top_3_predictions": top_3_predictions,
-        "raw_probabilities": probs.tolist()
+        "raw_probabilities": probs.tolist(),
+        "normalized_entropy": round(normalized_entropy, 4),
+        "supported_classes": metadata["classes"],
     }

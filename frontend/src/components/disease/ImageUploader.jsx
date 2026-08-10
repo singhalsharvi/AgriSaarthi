@@ -5,28 +5,44 @@ import { useLanguage } from '../../context/LanguageContext';
 export const ImageUploader = ({ onAnalyze, isLoading }) => {
   const { t } = useLanguage();
   const [selectedImage, setSelectedImage] = useState(null);
-  const [cropName, setCropName] = useState('Tomato');
-  const [symptoms, setSymptoms] = useState('Water-soaked brown spots on leaves with yellow margins');
+  const [imageFile, setImageFile] = useState(null);
+  const [uploadError, setUploadError] = useState('');
+  // Do not pre-fill a crop or symptoms: those values can make a user believe
+  // the diagnosis was supplied by the model when it was only a default.
+  const [cropName, setCropName] = useState('');
+  const [symptoms, setSymptoms] = useState('');
   const fileInputRef = useRef(null);
   const cameraInputRef = useRef(null);
 
   const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setSelectedImage(reader.result);
-      };
-      reader.readAsDataURL(file);
+    const file = e.target.files?.[0];
+    if (!file) return;
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      setUploadError('Please select a JPG, PNG, or WEBP image.');
+      return;
     }
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadError('Please select an image smaller than 10 MB.');
+      return;
+    }
+    setUploadError('');
+    setImageFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => setSelectedImage(reader.result);
+    reader.readAsDataURL(file);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    if (!imageFile) {
+      setUploadError('Upload a clear plant-leaf image before starting analysis.');
+      return;
+    }
     onAnalyze({
       cropName,
       symptoms,
-      image: selectedImage
+      imageFile,
+      previewUrl: selectedImage
     });
   };
 
@@ -105,7 +121,13 @@ export const ImageUploader = ({ onAnalyze, isLoading }) => {
               <img src={selectedImage} alt="Uploaded leaf" style={{ width: '100%', height: '320px', objectFit: 'cover' }} />
               <button
                 type="button"
-                onClick={() => setSelectedImage(null)}
+                onClick={() => {
+                  setSelectedImage(null);
+                  setImageFile(null);
+                  setUploadError('');
+                  if (fileInputRef.current) fileInputRef.current.value = '';
+                  if (cameraInputRef.current) cameraInputRef.current.value = '';
+                }}
                 style={{
                   position: 'absolute',
                   top: '0.75rem',
@@ -154,6 +176,11 @@ export const ImageUploader = ({ onAnalyze, isLoading }) => {
                 Supported Formats: JPG, JPEG, PNG (Mobile camera supported)
               </p>
             </div>
+          )}
+          {uploadError && (
+            <p role="alert" style={{ color: 'var(--color-terracotta)', margin: '0.6rem 0 0', fontSize: '0.9rem' }}>
+              {uploadError}
+            </p>
           )}
         </div>
 

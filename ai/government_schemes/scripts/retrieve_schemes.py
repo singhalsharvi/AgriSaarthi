@@ -65,17 +65,6 @@ def retrieve_schemes(
     metadatas = (results.get("metadatas", [[]])[0]) if results else []
     distances = (results.get("distances", [[]])[0]) if results else []
 
-    # If filtering by eligible schemes produced no results (e.g. name mismatch), fallback to broad vector search
-    if not documents and where_clause:
-        results = collection.query(
-            query_embeddings=[query_embedding],
-            n_results=top_k,
-            include=["documents", "metadatas", "distances"],
-        )
-        documents = results.get("documents", [[]])[0]
-        metadatas = results.get("metadatas", [[]])[0]
-        distances = results.get("distances", [[]])[0]
-
     retrieved: List[Dict[str, Any]] = []
     for doc, metadata, dist in zip(documents, metadatas, distances):
         metadata = metadata or {}

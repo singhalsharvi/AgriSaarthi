@@ -45,6 +45,7 @@ def read_root():
             "/government-schemes/recommend",
             "/crop/recommend",
             "/disease/analyze",
+            "/disease/detect",
             "/health",
             "/docs",
         ],

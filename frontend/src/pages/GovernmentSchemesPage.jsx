@@ -10,9 +10,11 @@ export const GovernmentSchemesPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [schemes, setSchemes] = useState(null);
   const [selectedScheme, setSelectedScheme] = useState(null);
+  const [error, setError] = useState('');
 
   const handleSearch = async (filters) => {
     setIsLoading(true);
+    setError('');
     try {
       const res = await apiService.recommendSchemes(filters);
       setTimeout(() => {
@@ -20,6 +22,7 @@ export const GovernmentSchemesPage = () => {
         setIsLoading(false);
       }, 1500);
     } catch (err) {
+      setError(err.message || 'Could not load scheme recommendations.');
       setIsLoading(false);
     }
   };
@@ -27,6 +30,12 @@ export const GovernmentSchemesPage = () => {
   return (
     <div className="page-container">
       <SchemeFilters onSearch={handleSearch} isLoading={isLoading} />
+
+      {error && (
+        <div role="alert" style={{ marginBottom: '1.5rem', padding: '1rem 1.25rem', borderRadius: 'var(--radius-md)', background: 'var(--color-terracotta-light)', color: 'var(--color-terracotta)', border: '1px solid var(--color-terracotta)' }}>
+          {error}
+        </div>
+      )}
 
       {schemes && (
         <div style={{ marginBottom: '3.5rem' }} className="animate-fade-in">

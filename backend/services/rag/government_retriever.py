@@ -50,8 +50,14 @@ class GovernmentSchemeRetriever(BaseRetriever):
             top_n=10,
         )
 
-        # Step 2: Formulate query text for semantic retrieval
-        search_query = query.strip() if query and query.strip() else f"Government schemes for {crop or 'agriculture'} in {state or 'India'} for farmers"
+        # Step 2: Keep every supplied profile field in the semantic query.  This
+        # lets the LLM/RAG layer explain recommendations against the actual inputs.
+        profile_query = (
+            f"Location: {state or 'India'}; annual income: {annual_income if annual_income is not None else 'not provided'} INR; "
+            f"land size: {landholding if landholding is not None else 'not provided'} hectares; "
+            f"gender: {gender or 'prefer not to say'}; farmer category: {farmer_category or 'not specified'}."
+        )
+        search_query = f"{query.strip()} {profile_query}" if query and query.strip() else f"Government schemes for farmers. {profile_query}"
 
         # Step 3: Semantic ChromaDB vector search
         retrieved_docs = retrieve_schemes(

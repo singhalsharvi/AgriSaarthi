@@ -1,10 +1,11 @@
 import { 
   MOCK_CROP_RESPONSE, 
-  MOCK_DISEASE_RESPONSE, 
-  MOCK_GOVT_SCHEMES_RESPONSE 
+  MOCK_DISEASE_RESPONSE
 } from './mockData';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
+// Use the same machine that serves the frontend by default. This works both on
+// localhost and when a farmer opens the site through the computer's LAN address.
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || `http://${window.location.hostname || '127.0.0.1'}:8000`;
 
 function dataURLtoBlob(dataurl) {
   if (!dataurl || typeof dataurl !== 'string') return null;
@@ -89,63 +90,49 @@ export const apiService = {
 
   // 2. Disease Detection API
   analyzeDisease: async (payload) => {
-    try {
-      let body;
-      const headers = {};
-      if (payload.image) {
-        body = new FormData();
-        const blob = dataURLtoBlob(payload.image);
-        if (blob) {
-          body.append("image", blob, "leaf.jpg");
-        }
-        body.append("crop_name", payload.cropName || "");
-        body.append("symptoms", payload.symptoms || "");
-        body.append("user_query", payload.userQuery || "");
-      } else {
-        body = JSON.stringify({
-          crop_name: payload.cropName || "Tomato",
-          symptoms: payload.symptoms || "Dark brown leaf spots with yellow margins",
-          user_query: payload.userQuery || "How to treat leaf spot disease?"
-        });
-      }
+    if (!(payload.imageFile instanceof File)) {
+      throw new Error('Select a valid plant-leaf image before analysis.');
+    }
 
-      const data = await fetchWithTimeout(`${BASE_URL}/disease/analyze`, {
+    const body = new FormData();
+    body.append('image', payload.imageFile, payload.imageFile.name);
+    body.append('crop_name', payload.cropName || '');
+    body.append('symptoms', payload.symptoms || '');
+    body.append('user_query', payload.userQuery || '');
+
+    try {
+      return await fetchWithTimeout(`${BASE_URL}/disease/analyze`, {
         method: 'POST',
-        body: body,
-        headers: headers
+        body
       });
-      return data;
     } catch (err) {
-      console.warn("Backend API unreachable, using realistic AgriSaarthi dataset:", err.message);
-      return {
-        ...MOCK_DISEASE_RESPONSE,
-        crop_name: payload.cropName || "Tomato"
-      };
+      if (err.name === 'AbortError') {
+        throw new Error('The analysis took too long. Check that the backend is running and try again.');
+      }
+      throw new Error(`Disease analysis failed: ${err.message}`);
     }
   },
 
   // 3. Government Schemes API
   recommendSchemes: async (payload) => {
     try {
+      const location = payload.location?.trim();
+      const annualIncome = Number.parseFloat(payload.annualIncome);
+      const landholding = Number.parseFloat(payload.landholding);
       const data = await fetchWithTimeout(`${BASE_URL}/government-schemes/recommend`, {
         method: 'POST',
         body: JSON.stringify({
-          state: payload.state || "Uttar Pradesh",
-          crop: payload.crop || "Rice",
-          farmer_category: payload.farmerCategory || "Small and marginal farmer families",
-          annual_income: payload.annualIncome ? parseFloat(payload.annualIncome) : 50000,
-          landholding: payload.landholding ? parseFloat(payload.landholding) : 1.5,
-          user_query: payload.userQuery || "Financial assistance and crop insurance schemes",
+          location,
+          annual_income: Number.isFinite(annualIncome) ? annualIncome : null,
+          landholding: Number.isFinite(landholding) ? landholding : null,
+          gender: payload.gender || "prefer_not_to_say",
+          user_query: payload.userQuery || `Find government schemes for a ${payload.gender || 'farmer'} farmer in ${location || 'India'} with annual income of ₹${payload.annualIncome || 'not provided'} and ${payload.landholding || 'not provided'} hectares of land.`,
           top_k: 5
         })
       });
       return data;
     } catch (err) {
-      console.warn("Backend API unreachable, using realistic AgriSaarthi dataset:", err.message);
-      return {
-        ...MOCK_GOVT_SCHEMES_RESPONSE,
-        state: payload.state || "Uttar Pradesh"
-      };
+      throw new Error(`Government scheme recommendation failed: ${err.message}`);
     }
   },
 

@@ -1,6 +1,6 @@
 from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from backend.services.rag.gemini_service import GeminiService
 from backend.services.rag.government_retriever import GovernmentSchemeRetriever
@@ -13,6 +13,7 @@ gemini_service = GeminiService()
 
 
 class GovernmentSchemeRequest(BaseModel):
+    location: Optional[str] = Field(None, min_length=2, max_length=200, example="Meerut, Uttar Pradesh")
     state: Optional[str] = Field(None, example="Karnataka")
     crop: Optional[str] = Field(None, example="rice")
     farmer_category: Optional[str] = Field(None, example="Small and marginal farmer families")
@@ -24,10 +25,22 @@ class GovernmentSchemeRequest(BaseModel):
     top_k: int = Field(5, ge=1, le=10)
     farmer_id: Optional[str] = Field("ramesh.farmer@agrisaarthi.in", description="Farmer ID for logging activity")
 
+    @field_validator("gender")
+    @classmethod
+    def validate_gender(cls, value: Optional[str]) -> Optional[str]:
+        if value is None:
+            return value
+        normalized = value.strip().lower().replace(" ", "_")
+        allowed = {"male", "female", "prefer_not_to_say"}
+        if normalized not in allowed:
+            raise ValueError("gender must be male, female, or prefer_not_to_say")
+        return normalized
+
 
 class SchemeDetail(BaseModel):
     scheme_name: str
     official_website: Optional[str] = None
+    site: Optional[str] = None
     source_file: Optional[str] = None
     distance: float
     snippet: str
@@ -51,7 +64,7 @@ def recommend_government_schemes(request: GovernmentSchemeRequest) -> Government
         retrieval_result = retriever.retrieve(
             query=request.user_query or "",
             top_k=request.top_k,
-            state=request.state,
+            state=request.location or request.state,
             crop=request.crop,
             farmer_category=request.farmer_category,
             annual_income=request.annual_income,
@@ -65,7 +78,7 @@ def recommend_government_schemes(request: GovernmentSchemeRequest) -> Government
 
         # Step 2: Synthesize evidence-backed response using common Gemini layer
         profile_meta = {
-            "state": request.state,
+            "location": request.location or request.state,
             "crop": request.crop,
             "farmer_category": request.farmer_category,
             "annual_income": request.annual_income,
@@ -89,6 +102,7 @@ def recommend_government_schemes(request: GovernmentSchemeRequest) -> Government
                 SchemeDetail(
                     scheme_name=doc.get("scheme_name") or "Government Scheme",
                     official_website=doc.get("official_website") or None,
+                    site=doc.get("official_website") or None,
                     source_file=doc.get("source_file") or None,
                     distance=round(doc.get("distance", 0.0), 4),
                     snippet=doc.get("document_text", "")[:250].strip() + "...",
@@ -101,7 +115,7 @@ def recommend_government_schemes(request: GovernmentSchemeRequest) -> Government
                 farmer_id=request.farmer_id or "ramesh.farmer@agrisaarthi.in",
                 activity_type="scheme_search",
                 details={
-                    "state": request.state or "All",
+                    "location": request.location or request.state or "All",
                     "crop": request.crop or "All",
                     "query": request.user_query or "",
                     "eligible_schemes_count": len(eligible_schemes),

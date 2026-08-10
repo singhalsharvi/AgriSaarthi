@@ -1,18 +1,28 @@
-ai/.venv/
-ai/.vscode/
-
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
 .venv/
-
+venv/
 .env
 
-__pycache__/
-*.pyc
+# Logs
+*.log
 
-ai/tmp_debug_retrieval.py
+# Databases
+*.db
 
-*.pyo*
-*.DS_Store*
-*PlantDoc-Dataset/*
-*PlantDoc-Dataset*/
-plantdoc.zip
-temp_*
+# Node
+frontend/node_modules/
+frontend/dist/
+
+# Python/Node caches
+.pytest_cache/
+.vite/
+
+# Chroma generated database
+**/chroma_db/
+
+# OS
+.DS_Store
+Thumbs.db

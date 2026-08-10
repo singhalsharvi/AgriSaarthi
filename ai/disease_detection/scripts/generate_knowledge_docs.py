@@ -1,8 +1,9 @@
 import os
 import sys
 
-# Import the DISEASE_KNOWLEDGE from the sibling directory
-sibling_src = r"C:\Users\psing\OneDrive\Desktop\Farm AI Companion\ai\disease_detection\src"
+# Import the DISEASE_KNOWLEDGE from the sibling directory dynamically
+desktop_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))))
+sibling_src = os.path.join(desktop_dir, "Farm AI Companion", "ai", "disease_detection", "src")
 if sibling_src not in sys.path:
     sys.path.insert(0, sibling_src)
 
