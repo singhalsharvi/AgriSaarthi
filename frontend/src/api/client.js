@@ -4,7 +4,7 @@ import {
   MOCK_GOVT_SCHEMES_RESPONSE 
 } from './mockData';
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8000';
 
 function dataURLtoBlob(dataurl) {
   if (!dataurl || typeof dataurl !== 'string') return null;
@@ -20,7 +20,7 @@ function dataURLtoBlob(dataurl) {
   return new Blob([u8arr], { type: mime });
 }
 
-async function fetchWithTimeout(url, options = {}, timeoutMs = 8000) {
+async function fetchWithTimeout(url, options = {}, timeoutMs = 25000) {
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
   
