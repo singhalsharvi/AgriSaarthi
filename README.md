@@ -18,7 +18,6 @@
 - [Environment Variables](#environment-variables)
 - [Roadmap](#roadmap)
 - [Team](#team)
-- [License](#license)
 
 ---
 
