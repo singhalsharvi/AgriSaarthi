@@ -21,6 +21,8 @@ disease_retriever = DiseaseRetriever()
 gemini_service = GeminiService()
 
 CONFIDENCE_THRESHOLD = 0.45  # 45% confidence threshold for CNN model
+MIN_CONFIDENCE_MARGIN = 0.10
+MAX_NORMALIZED_ENTROPY = 0.72
 MAX_IMAGE_BYTES = 10 * 1024 * 1024
 SUPPORTED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp"}
 
@@ -35,6 +37,18 @@ class DiseaseAnalysisResponse(BaseModel):
     confidence_status: str
     analysis: str
     sources: List[str]
+
+
+def is_uncertain_prediction(prediction_result: Dict[str, Any]) -> bool:
+    """Reject ambiguous softmax predictions, not only low top-class scores."""
+    top_predictions = prediction_result.get("top_3_predictions", [])
+    top_confidence = float(top_predictions[0].get("confidence", 0.0)) if top_predictions else 0.0
+    return (
+        not top_predictions
+        or top_confidence < CONFIDENCE_THRESHOLD
+        or float(prediction_result.get("confidence_margin", 0.0)) < MIN_CONFIDENCE_MARGIN
+        or float(prediction_result.get("normalized_entropy", 1.0)) > MAX_NORMALIZED_ENTROPY
+    )
 
 
 @router.post("/analyze", response_model=DiseaseAnalysisResponse)
@@ -108,7 +122,7 @@ async def analyze_disease(request: Request) -> DiseaseAnalysisResponse:
             if top_predictions:
                 best_match = top_predictions[0]
                 confidence_pct = best_match["confidence"] * 100.0
-                is_low_confidence = best_match["confidence"] < CONFIDENCE_THRESHOLD
+                is_low_confidence = is_uncertain_prediction(pred_results)
                 
                 if is_low_confidence:
                     crop_pred = crop_name or "Uncertain Crop"
@@ -314,7 +328,7 @@ async def detect_disease(
         best_match = top_predictions[0]
         confidence = float(best_match["confidence"])
         confidence_pct = confidence * 100.0
-        is_low_confidence = confidence < CONFIDENCE_THRESHOLD
+        is_low_confidence = is_uncertain_prediction(pred_results)
         
         if is_low_confidence:
             crop_pred = "Uncertain Crop"

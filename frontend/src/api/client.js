@@ -5,7 +5,7 @@ import {
 
 // Use the same machine that serves the frontend by default. This works both on
 // localhost and when a farmer opens the site through the computer's LAN address.
-const BASE_URL = import.meta.env.VITE_API_BASE_URL || `http://${window.location.hostname || '127.0.0.1'}:8000`;
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api';
 
 function dataURLtoBlob(dataurl) {
   if (!dataurl || typeof dataurl !== 'string') return null;

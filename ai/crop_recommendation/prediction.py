@@ -61,6 +61,21 @@ def predict_crop(
     """
     _load_artifacts()
 
+    numeric_features = {
+        "Nitrogen": Nitrogen, "Phosphorus": Phosphorus, "Potassium": Potassium,
+        "Temperature": Temperature, "Humidity": Humidity, "pH_Value": pH_Value,
+        "Rainfall": Rainfall,
+    }
+    for name, value in numeric_features.items():
+        if not np.isfinite(float(value)):
+            raise ValueError(f"{name} must be a finite number.")
+    if not 0.0 <= float(pH_Value) <= 14.0:
+        raise ValueError("pH_Value must be between 0 and 14.")
+    if not 0.0 <= float(Humidity) <= 100.0:
+        raise ValueError("Humidity must be between 0 and 100.")
+    if float(Rainfall) < 0.0:
+        raise ValueError("Rainfall cannot be negative.")
+
     input_data = pd.DataFrame([{
         "Nitrogen": float(Nitrogen),
         "Phosphorus": float(Phosphorus),
@@ -80,6 +95,10 @@ def predict_crop(
     prob_dict = {crop: round(float(prob), 4) for crop, prob in zip(classes, probs)}
 
     top_3_indices = np.argsort(probs)[::-1][:3]
+    sorted_probs = np.sort(probs)[::-1]
+    confidence_margin = float(sorted_probs[0] - sorted_probs[1]) if len(sorted_probs) > 1 else float(sorted_probs[0])
+    entropy = -float(np.sum(probs * np.log(np.clip(probs, 1e-12, 1.0))))
+    normalized_entropy = entropy / float(np.log(len(probs))) if len(probs) > 1 else 0.0
     top_3_list = []
     for idx in top_3_indices:
         crop_name = classes[idx]
@@ -92,7 +111,9 @@ def predict_crop(
 
     return {
         "top_3_predictions": top_3_list,
-        "prediction_probabilities": prob_dict
+        "prediction_probabilities": prob_dict,
+        "confidence_margin": round(confidence_margin, 4),
+        "normalized_entropy": round(normalized_entropy, 4),
     }
 
 if __name__ == "__main__":

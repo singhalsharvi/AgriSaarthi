@@ -13,10 +13,12 @@ export const AuthProvider = ({ children }) => {
     const emailOrPhone = userPayload.emailOrPhone || 'ramesh.farmer@agrisaarthi.in';
     let profile = null;
     
-    try {
-      profile = await apiService.getFarmerProfile(emailOrPhone);
-    } catch (e) {
-      console.warn("Failed to get profile from backend:", e);
+    if (!userPayload.isDemo) {
+      try {
+        profile = await apiService.getFarmerProfile(emailOrPhone);
+      } catch (e) {
+        console.warn("Failed to get profile from backend:", e);
+      }
     }
 
     const farmerUser = {
@@ -25,14 +27,17 @@ export const AuthProvider = ({ children }) => {
       emailOrPhone: emailOrPhone,
       landholding: profile?.land_size || userPayload.landholding || '2.5 Acres',
       soilType: profile?.soil_type || userPayload.soilType || 'Alluvial Soil',
+      isDemo: Boolean(userPayload.isDemo),
       signedInAt: new Date().toISOString()
     };
 
     // Sync to backend database
-    try {
-      await apiService.saveFarmerProfile(farmerUser);
-    } catch (e) {
-      console.warn("Failed to save profile on backend:", e);
+    if (!userPayload.isDemo) {
+      try {
+        await apiService.saveFarmerProfile(farmerUser);
+      } catch (e) {
+        console.warn("Failed to save profile on backend:", e);
+      }
     }
 
     setUser(farmerUser);

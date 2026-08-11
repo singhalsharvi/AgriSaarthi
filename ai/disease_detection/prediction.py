@@ -193,10 +193,12 @@ def predict_disease(image_pil: Image.Image) -> dict:
     # alone must not be treated as a diagnosis.
     entropy = -sum(float(prob) * math.log(float(prob) + 1e-12) for prob in probs.tolist())
     normalized_entropy = entropy / math.log(len(metadata["classes"]))
+    confidence_margin = float(top_probs[0].item() - top_probs[1].item()) if len(top_probs) > 1 else float(top_probs[0].item())
 
     return {
         "top_3_predictions": top_3_predictions,
         "raw_probabilities": probs.tolist(),
         "normalized_entropy": round(normalized_entropy, 4),
+        "confidence_margin": round(confidence_margin, 4),
         "supported_classes": metadata["classes"],
     }

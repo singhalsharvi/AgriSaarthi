@@ -71,7 +71,10 @@
 
   <script type="text/babel">
     const { useState, useEffect } = React;
-    const API_BASE_URL = `http://${window.location.hostname || '127.0.0.1'}:8000`;
+    // Vite forwards /api to the FastAPI server, avoiding browser CORS/address issues.
+    const API_BASE_URL = window.location.port === '3000'
+      ? '/api'
+      : `http://${window.location.hostname || '127.0.0.1'}:8000`;
 
     const TRANSLATIONS = {
       en: {
@@ -181,9 +184,14 @@
 
     function App() {
       const [lang, setLang] = useState('en');
-      const [activeTab, setActiveTab] = useState('home');
+      const [activeTab, setActiveTab] = useState('welcome');
       const [isLangOpen, setIsLangOpen] = useState(false);
-      const [user, setUser] = useState(null);
+      const [user, setUser] = useState(() => {
+        try { return JSON.parse(localStorage.getItem('agri_user')); } catch { return null; }
+      });
+      const [profileForm, setProfileForm] = useState({ name: '', contact: '', location: '', landSize: '', soilType: '' });
+      const [profileLoading, setProfileLoading] = useState(false);
+      const [profileError, setProfileError] = useState('');
 
       // Crop Rec State
       const [cropLoc, setCropLoc] = useState('Meerut, Uttar Pradesh');
@@ -208,6 +216,48 @@
       const [schemeError, setSchemeError] = useState('');
 
       const t = (key) => (TRANSLATIONS[lang] && TRANSLATIONS[lang][key]) || TRANSLATIONS.en[key] || key;
+
+      const updateProfileField = (field, value) => setProfileForm(current => ({ ...current, [field]: value }));
+
+      const handleProfileSubmit = async (e) => {
+        e.preventDefault();
+        const profile = {
+          name: profileForm.name.trim(),
+          emailOrPhone: profileForm.contact.trim(),
+          location: profileForm.location.trim(),
+          landholding: profileForm.landSize.trim(),
+          soilType: profileForm.soilType.trim()
+        };
+        if (!profile.name || !profile.emailOrPhone || !profile.location || !profile.landholding) {
+          setProfileError('Please complete your name, contact, location, and land size.');
+          return;
+        }
+        setProfileLoading(true);
+        setProfileError('');
+        try {
+          const response = await fetch(`${API_BASE_URL}/farmer/profile`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              farmer_id: profile.emailOrPhone,
+              name: profile.name,
+              location: profile.location,
+              contact_info: profile.emailOrPhone,
+              land_size: profile.landholding,
+              soil_type: profile.soilType
+            })
+          });
+          if (!response.ok) throw new Error('Could not save your profile to the server.');
+        } catch (error) {
+          // The local copy keeps onboarding usable if the backend starts later.
+          console.warn(error.message);
+        } finally {
+          localStorage.setItem('agri_user', JSON.stringify(profile));
+          setUser(profile);
+          setProfileLoading(false);
+          setActiveTab('home');
+        }
+      };
 
       const handleMockCropSubmit = (e) => {
         e.preventDefault();
@@ -385,6 +435,27 @@
         }
       };
 
+      if (activeTab === 'welcome') {
+        return (
+          <div style={{ minHeight: '100vh', display: 'grid', placeItems: 'center', padding: '1.5rem', position: 'relative', overflow: 'hidden', background: `linear-gradient(90deg, rgba(7,39,20,0.96) 0%, rgba(17,72,37,0.84) 45%, rgba(12,43,24,0.25) 100%), url('https://images.unsplash.com/photo-1576528352255-4cedbc4273d3?auto=format&fit=crop&crop=faces,edges&w=2400&q=90') center 38%/cover no-repeat` }}>
+            <div style={{ position: 'absolute', inset: 0, backgroundImage: 'radial-gradient(circle at 82% 20%, rgba(229,184,66,0.20), transparent 26%), linear-gradient(rgba(255,255,255,0.035) 1px, transparent 1px)', backgroundSize: 'auto, 32px 32px', pointerEvents: 'none' }} />
+            <section style={{ maxWidth: '760px', width: '100%', textAlign: 'left', color: 'white', position: 'relative', zIndex: 1, padding: '1.25rem' }}>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.8rem', marginBottom: '3.5rem' }}>
+                <div style={{ width: '56px', height: '56px', borderRadius: '18px', display: 'grid', placeItems: 'center', background: 'linear-gradient(145deg, #2D6A3F, #12361F)', border: '1px solid rgba(255,255,255,0.32)', boxShadow: '0 10px 24px rgba(0,0,0,0.22)', fontSize: '1.85rem' }}>🌾</div>
+                <div><div style={{ fontSize: '1.65rem', fontWeight: 800, letterSpacing: '-0.04em' }}>Agri<span style={{ color: '#F7D46B' }}>Saarthi</span></div><div style={{ fontSize: '0.65rem', fontWeight: 800, letterSpacing: '0.13em', color: 'rgba(255,255,255,0.72)', textTransform: 'uppercase', marginTop: '0.25rem' }}>Your farm companion</div></div>
+              </div>
+              <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.45rem', color: '#F7D46B', fontSize: '0.78rem', fontWeight: 800, letterSpacing: '0.11em', textTransform: 'uppercase', marginBottom: '1rem' }}>✦ Made for Indian farmers</div>
+              <h1 style={{ color: 'white', fontSize: 'clamp(3rem, 6vw, 5.2rem)', lineHeight: 1.03, letterSpacing: '-0.055em', marginBottom: '1.3rem', maxWidth: '700px' }}>Farming wisdom,<br /><span style={{ color: '#F7D46B' }}>powered by clarity.</span></h1>
+              <p style={{ fontSize: 'clamp(1.02rem, 2vw, 1.22rem)', lineHeight: 1.7, color: 'rgba(255,255,255,0.9)', marginBottom: '2rem', maxWidth: '600px' }}>Get confident crop guidance, plant-health support, and government scheme information — all built around your farm.</p>
+              <button onClick={() => setActiveTab('signin')} style={{ background: '#F4C542', color: '#12361F', padding: '1.05rem 2rem', borderRadius: 'var(--radius-full)', fontWeight: 800, fontSize: '1rem', boxShadow: '0 12px 28px rgba(0,0,0,0.22)', display: 'inline-flex', alignItems: 'center', gap: '0.7rem' }}>GET STARTED <span style={{ fontSize: '1.25rem' }}>→</span></button>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.7rem', marginTop: '2.2rem' }}>
+                {['Crop advice', 'Plant health', 'Govt. schemes'].map(item => <span key={item} style={{ padding: '0.5rem 0.8rem', borderRadius: 'var(--radius-full)', background: 'rgba(255,255,255,0.12)', border: '1px solid rgba(255,255,255,0.2)', backdropFilter: 'blur(8px)', fontSize: '0.78rem', fontWeight: 700 }}>✓ {item}</span>)}
+              </div>
+            </section>
+          </div>
+        );
+      }
+
       return (
         <div className="app-container">
           {/* Desktop Left Sidebar */}
@@ -496,7 +567,7 @@
                       {t('heroSub')}
                     </p>
                     <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
-                      <button onClick={() => setActiveTab('crop')} style={{ background: 'var(--color-wheat-gold)', color: 'var(--color-forest-green-dark)', padding: '1rem 2.25rem', borderRadius: 'var(--radius-full)', fontWeight: 800, fontSize: '1.05rem' }}>
+                      <button onClick={() => setActiveTab('signin')} style={{ background: 'var(--color-wheat-gold)', color: 'var(--color-forest-green-dark)', padding: '1rem 2.25rem', borderRadius: 'var(--radius-full)', fontWeight: 800, fontSize: '1.05rem' }}>
                         {t('getStarted')} →
                       </button>
                       <button onClick={() => setActiveTab('features')} style={{ background: 'rgba(255,255,255,0.15)', color: 'white', border: '1.5px solid rgba(255,255,255,0.4)', padding: '1rem 2rem', borderRadius: 'var(--radius-full)', fontWeight: 700, fontSize: '1rem' }}>
@@ -708,7 +779,8 @@
                   <div className="desi-card" style={{ padding: '2rem', marginBottom: '2rem' }}>
                     <span className="badge-desi" style={{ marginBottom: '0.5rem', display: 'inline-block' }}>📋 Digital Farm Notebook</span>
                     <h1 style={{ fontSize: '2.2rem', color: 'var(--color-forest-green-dark)' }}>Namaste, {user ? user.name : 'Farmer'} 👋</h1>
-                    <p style={{ color: 'var(--color-charcoal-muted)' }}>Location: Meerut, Uttar Pradesh | Season: Kharif</p>
+                    <p style={{ color: 'var(--color-charcoal-muted)' }}>Location: {user?.location || 'Not added yet'} | Land: {user?.landholding || 'Not added yet'}</p>
+                    <p style={{ color: 'var(--color-charcoal-muted)', fontSize: '0.9rem', marginTop: '0.4rem' }}>Contact: {user?.emailOrPhone || 'Not added yet'} {user?.soilType ? `| Soil: ${user.soilType}` : ''}</p>
                   </div>
 
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.5rem', marginBottom: '2.5rem' }}>
@@ -747,20 +819,33 @@
 
               {/* PAGE 9: SIGN IN */}
               {activeTab === 'signin' && (
-                <div className="desi-card" style={{ padding: '3rem', maxWidth: '480px', margin: '0 auto' }}>
-                  <h2 style={{ fontSize: '1.8rem', color: 'var(--color-forest-green-dark)', marginBottom: '0.5rem' }}>Sign In to AgriSaarthi</h2>
-                  <p style={{ fontSize: '0.9rem', color: 'var(--color-charcoal-muted)', marginBottom: '1.5rem' }}>Access your personalized digital farm notebook.</p>
-                  <form onSubmit={e => { e.preventDefault(); setUser({ name: 'Ramesh Kumar' }); setActiveTab('dashboard'); }}>
-                    <div style={{ marginBottom: '1rem' }}>
-                      <label style={{ fontWeight: 700, display: 'block', marginBottom: '0.35rem' }}>Email / Phone Number</label>
-                      <input type="text" className="form-input" defaultValue="ramesh.farmer@agrisaarthi.in" required />
+                <div style={{ maxWidth: '1040px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', borderRadius: '22px', overflow: 'hidden', boxShadow: 'var(--shadow-lg)', border: '1px solid var(--color-cream-border)', background: 'white' }}>
+                  <aside style={{ minHeight: '620px', padding: '3rem', color: 'white', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', background: `linear-gradient(145deg, rgba(9,45,25,0.94), rgba(18,54,31,0.76)), url('https://images.unsplash.com/photo-1576528352255-4cedbc4273d3?auto=format&fit=crop&crop=faces,edges&w=1200&q=85') center/cover no-repeat` }}>
+                    <div>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.6rem', fontWeight: 800, fontSize: '1.25rem' }}><span style={{ width: '38px', height: '38px', borderRadius: '12px', display: 'grid', placeItems: 'center', background: 'rgba(255,255,255,0.14)', border: '1px solid rgba(255,255,255,0.28)' }}>🌾</span> Agri<span style={{ color: '#F7D46B' }}>Saarthi</span></div>
+                      <div style={{ marginTop: '4.5rem', color: '#F7D46B', fontSize: '0.76rem', fontWeight: 800, letterSpacing: '0.12em', textTransform: 'uppercase' }}>Step 1 of 1 · Your farm profile</div>
+                      <h1 style={{ color: 'white', fontSize: '2.5rem', lineHeight: 1.13, margin: '0.8rem 0 1rem' }}>Let’s understand your farm.</h1>
+                      <p style={{ color: 'rgba(255,255,255,0.85)', lineHeight: 1.7, maxWidth: '360px' }}>A few details help AgriSaarthi tailor crop, weather, and scheme guidance around you.</p>
                     </div>
-                    <div style={{ marginBottom: '1.5rem' }}>
-                      <label style={{ fontWeight: 700, display: 'block', marginBottom: '0.35rem' }}>Password</label>
-                      <input type="password" className="form-input" defaultValue="••••••••" required />
-                    </div>
-                    <button type="submit" className="btn-primary" style={{ width: '100%', justifyContent: 'center' }}>SIGN IN</button>
-                  </form>
+                    <div style={{ display: 'grid', gap: '0.7rem' }}>{['Personalised crop guidance', 'Plant health history', 'Relevant scheme discovery'].map(item => <div key={item} style={{ display: 'flex', gap: '0.6rem', alignItems: 'center', fontSize: '0.88rem', fontWeight: 650 }}><span style={{ color: '#F7D46B' }}>✓</span>{item}</div>)}</div>
+                  </aside>
+                  <section style={{ padding: 'clamp(2rem, 5vw, 3.5rem)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem', color: 'var(--color-forest-green)', fontSize: '0.8rem', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: '0.8rem' }}>✦ Set up your account</div>
+                    <h2 style={{ fontSize: '2rem', color: 'var(--color-forest-green-dark)', marginBottom: '0.45rem' }}>Create your farmer profile</h2>
+                    <p style={{ fontSize: '0.92rem', color: 'var(--color-charcoal-muted)', marginBottom: '1.7rem' }}>Your information remains on this device and can be updated later.</p>
+                    <button type="button" onClick={() => { const demo = { name: 'Asha Patil (Demo)', emailOrPhone: 'demo.farmer@agrisaarthi.local', location: 'Nashik, Maharashtra', landholding: '3 Acres', soilType: 'Black Soil', isDemo: true }; localStorage.setItem('agri_user', JSON.stringify(demo)); setUser(demo); setActiveTab('home'); }} style={{ width: '100%', marginBottom: '1.5rem', padding: '0.85rem 1rem', borderRadius: 'var(--radius-md)', border: '1px solid #B8D8BF', background: '#F1F8F2', color: 'var(--color-forest-green-dark)', fontWeight: 800 }}>🌱 Explore with Demo Farm Data <span style={{ fontWeight: 500, color: 'var(--color-charcoal-muted)' }}>— no sign-up needed</span></button>
+                    <form onSubmit={handleProfileSubmit}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(190px, 1fr))', gap: '1rem' }}>
+                        <div style={{ gridColumn: '1 / -1' }}><label style={{ fontWeight: 700, display: 'block', marginBottom: '0.35rem' }}>Farmer name</label><input type="text" className="form-input" value={profileForm.name} onChange={e => updateProfileField('name', e.target.value)} placeholder="e.g. Ramesh Kumar" required /></div>
+                        <div><label style={{ fontWeight: 700, display: 'block', marginBottom: '0.35rem' }}>Email or phone</label><input type="text" className="form-input" value={profileForm.contact} onChange={e => updateProfileField('contact', e.target.value)} placeholder="Mobile number or email" required /></div>
+                        <div><label style={{ fontWeight: 700, display: 'block', marginBottom: '0.35rem' }}>Farm location</label><input type="text" className="form-input" value={profileForm.location} onChange={e => updateProfileField('location', e.target.value)} placeholder="Village/City, State" required /></div>
+                        <div><label style={{ fontWeight: 700, display: 'block', marginBottom: '0.35rem' }}>Land size</label><input type="text" className="form-input" value={profileForm.landSize} onChange={e => updateProfileField('landSize', e.target.value)} placeholder="e.g. 1.5 hectares" required /></div>
+                        <div><label style={{ fontWeight: 700, display: 'block', marginBottom: '0.35rem' }}>Soil type <span style={{ fontWeight: 500, color: 'var(--color-charcoal-muted)' }}>(optional)</span></label><input type="text" className="form-input" value={profileForm.soilType} onChange={e => updateProfileField('soilType', e.target.value)} placeholder="e.g. Loamy soil" /></div>
+                      </div>
+                      {profileError && <p role="alert" style={{ color: 'var(--color-terracotta)', margin: '1rem 0 0' }}>{profileError}</p>}
+                      <button type="submit" className="btn-primary" disabled={profileLoading} style={{ width: '100%', justifyContent: 'center', marginTop: '1.5rem', padding: '1rem' }}>{profileLoading ? 'SAVING PROFILE...' : 'SAVE PROFILE AND CONTINUE →'}</button>
+                    </form>
+                  </section>
                 </div>
               )}
             </div>

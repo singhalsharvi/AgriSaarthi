@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
 import { useAuth } from '../../context/AuthContext';
+import { AgriSaarthiLogo } from '../brand/AgriSaarthiLogo';
 
 export const DesktopSidebar = ({ activeTab, setActiveTab }) => {
   const { t, setIsLangModalOpen, currentLang, languages } = useLanguage();
@@ -58,41 +59,7 @@ export const DesktopSidebar = ({ activeTab, setActiveTab }) => {
           alignItems: 'center',
           gap: '0.85rem'
         }}>
-          <div style={{
-            width: '44px',
-            height: '44px',
-            borderRadius: '12px',
-            backgroundColor: 'var(--color-leaf-light)',
-            border: '1.5px solid var(--color-leaf-green)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: 'var(--color-forest-green)'
-          }}>
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2a10 10 0 0 1 10 10c0 5.5-4.5 10-10 10S2 17.5 2 12A10 10 0 0 1 12 2z"/>
-              <path d="M12 6v12"/>
-              <path d="M6 12h12"/>
-              <path d="m8 8 8 8"/>
-            </svg>
-          </div>
-          <div>
-            <h1 style={{
-              fontSize: '1.35rem',
-              color: 'var(--color-forest-green-dark)',
-              margin: 0,
-              letterSpacing: '-0.02em',
-              fontWeight: 800
-            }}>AgriSaarthi</h1>
-            <p style={{
-              fontSize: '0.75rem',
-              color: 'var(--color-mitti-brown)',
-              margin: 0,
-              fontWeight: 600
-            }}>
-              {t('brandPhrase')}
-            </p>
-          </div>
+          <AgriSaarthiLogo />
         </div>
 
         {/* Main Navigation */}

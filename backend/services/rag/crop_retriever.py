@@ -32,6 +32,8 @@ class CropRetriever(BaseRetriever):
     """
 
     CONFIDENCE_THRESHOLD = 0.50  # 50% model confidence threshold
+    MIN_CONFIDENCE_MARGIN = 0.12
+    MAX_NORMALIZED_ENTROPY = 0.70
 
     def retrieve(
         self,
@@ -104,6 +106,13 @@ class CropRetriever(BaseRetriever):
 
         top_3_ml = predictions.get("top_3_predictions", [])
         top_ml_confidence = float(top_3_ml[0].get("confidence_score", 0.0)) if top_3_ml else 0.0
+        confidence_margin = float(predictions.get("confidence_margin", 0.0))
+        normalized_entropy = float(predictions.get("normalized_entropy", 1.0))
+        ml_is_decisive = (
+            top_ml_confidence >= self.CONFIDENCE_THRESHOLD
+            and confidence_margin >= self.MIN_CONFIDENCE_MARGIN
+            and normalized_entropy <= self.MAX_NORMALIZED_ENTROPY
+        )
 
         recommendation_source = "ML"
         recommended_crops_structured = []
@@ -111,7 +120,7 @@ class CropRetriever(BaseRetriever):
         warning_msg = None
 
         # Step 5: Evaluate ML Confidence against 50% threshold
-        if top_ml_confidence >= self.CONFIDENCE_THRESHOLD:
+        if ml_is_decisive:
             recommendation_source = "ML"
             for p in top_3_ml:
                 crop_name = p.get("crop", "")
@@ -127,7 +136,7 @@ class CropRetriever(BaseRetriever):
                 target_crop_names.append(crop_name)
         else:
             # ML confidence < 50%: Switch to Location + Soil Fallback Matcher
-            LOG.info("ML top prediction score (%.2f%%) is below 50%% threshold. Activating Location/Soil Fallback Matcher.", top_ml_confidence * 100)
+            LOG.info("ML prediction is uncertain (score %.2f%%, margin %.2f%%, entropy %.2f). Activating Location/Soil Fallback Matcher.", top_ml_confidence * 100, confidence_margin * 100, normalized_entropy)
             fallback_res = find_fallback_crops(
                 state=state,
                 soil_type=final_soil_type,
@@ -140,7 +149,7 @@ class CropRetriever(BaseRetriever):
             if fallback_res["status"] == "LOCATION_SOIL_RAG":
                 recommendation_source = "LOCATION_SOIL_RAG"
                 warning_msg = (
-                    f"The ML model has low confidence ({top_ml_confidence*100:.1f}%) for its 22 trained crops under these environmental conditions. "
+                    f"The ML prediction is uncertain (top score {top_ml_confidence*100:.1f}%, separation {confidence_margin*100:.1f}%). "
                     f"Alternative recommendations are provided from the regional location, soil, and climate knowledge base."
                 )
                 for fb in fallback_res["recommended_crops"]:
@@ -197,6 +206,8 @@ class CropRetriever(BaseRetriever):
             "soil_data": soil_info,
             "supplied_ml_features": supplied_ml_features,
             "ml_confidence": round(top_ml_confidence, 4),
+            "ml_confidence_margin": round(confidence_margin, 4),
+            "ml_normalized_entropy": round(normalized_entropy, 4),
             "recommendation_source": recommendation_source,
             "recommended_crops": recommended_crops_structured,
             "warning": warning_msg,

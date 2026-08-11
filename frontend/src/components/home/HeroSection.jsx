@@ -1,6 +1,7 @@
 import React from 'react';
 import { ArrowRight, Compass, ShieldCheck } from 'lucide-react';
 import { useLanguage } from '../../context/LanguageContext';
+import { AgriSaarthiLogo } from '../brand/AgriSaarthiLogo';
 
 export const HeroSection = ({ onGetStarted, onExploreFeatures }) => {
   const { t } = useLanguage();
@@ -20,11 +21,14 @@ export const HeroSection = ({ onGetStarted, onExploreFeatures }) => {
         minHeight: '540px',
         display: 'flex',
         alignItems: 'center',
-        background: `linear-gradient(to right, rgba(18, 54, 31, 0.92) 0%, rgba(18, 54, 31, 0.75) 45%, rgba(0, 0, 0, 0.3) 100%), url('https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=1600&q=80') center/cover no-repeat`,
+        background: `linear-gradient(90deg, rgba(8, 38, 21, 0.96) 0%, rgba(18, 54, 31, 0.82) 45%, rgba(9, 31, 18, 0.28) 100%), url('https://images.unsplash.com/photo-1592982537447-6f2a6a0e5c9f?auto=format&fit=crop&w=1800&q=90') center/cover no-repeat`,
         padding: '3.5rem 3rem',
         color: 'var(--color-white)'
       }}>
         <div style={{ maxWidth: '680px', zIndex: 2 }}>
+          <div style={{ marginBottom: '2.25rem' }}>
+            <AgriSaarthiLogo light />
+          </div>
           {/* Subdued Badge */}
           <div style={{
             display: 'inline-flex',

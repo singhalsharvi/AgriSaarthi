@@ -1,24 +1,40 @@
 import React, { useState } from 'react';
-import { Lock, Mail, UserCheck, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, UserCheck, ShieldCheck, Sprout } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useLanguage } from '../context/LanguageContext';
+import { AgriSaarthiLogo } from '../components/brand/AgriSaarthiLogo';
 
 export const SignInPage = ({ onNavigate }) => {
   const { signIn } = useAuth();
   const { t } = useLanguage();
 
-  const [emailOrPhone, setEmailOrPhone] = useState('ramesh.farmer@agrisaarthi.in');
+  const [emailOrPhone, setEmailOrPhone] = useState('');
   const [password, setPassword] = useState('••••••••');
   const [rememberMe, setRememberMe] = useState(true);
 
-  const handleSubmit = (e) => {
+  const completeSignIn = async (profile) => {
+    await signIn(profile);
+    onNavigate('dashboard');
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    signIn({
+    await completeSignIn({
       name: 'Ramesh Kumar',
       emailOrPhone,
       location: 'Meerut, Uttar Pradesh'
     });
-    onNavigate('dashboard');
+  };
+
+  const continueWithDemo = async () => {
+    await completeSignIn({
+      name: 'Asha Patil (Demo)',
+      emailOrPhone: 'demo.farmer@agrisaarthi.local',
+      location: 'Nashik, Maharashtra',
+      landholding: '3.0 Acres',
+      soilType: 'Black Soil',
+      isDemo: true
+    });
   };
 
   return (
@@ -36,8 +52,8 @@ export const SignInPage = ({ onNavigate }) => {
       }} className="desi-card">
         {/* Left Side — Real Indian Farm Photo */}
         <div style={{
-          minHeight: '380px',
-          background: `linear-gradient(to bottom, rgba(18, 54, 31, 0.7) 0%, rgba(18, 54, 31, 0.95) 100%), url('https://images.unsplash.com/photo-1500937386664-56d1dfef3854?auto=format&fit=crop&w=1000&q=80') center/cover no-repeat`,
+          minHeight: '500px',
+          background: `linear-gradient(135deg, rgba(10, 43, 24, 0.96) 0%, rgba(18, 54, 31, 0.76) 47%, rgba(10, 35, 20, 0.34) 100%), url('https://images.unsplash.com/photo-1592982537447-6f2a6a0e5c9f?auto=format&fit=crop&w=1400&q=85') center/cover no-repeat`,
           padding: '3rem 2.5rem',
           color: 'white',
           display: 'flex',
@@ -45,9 +61,9 @@ export const SignInPage = ({ onNavigate }) => {
           justify: 'space-between'
         }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', marginBottom: '1.5rem' }}>
-              <span style={{ fontSize: '1.75rem' }}>🌾</span>
-              <span style={{ fontSize: '1.5rem', fontWeight: 800 }}>AgriSaarthi</span>
+            <AgriSaarthiLogo light />
+            <div style={{ marginTop: '2.25rem', display: 'inline-flex', alignItems: 'center', gap: '0.45rem', color: '#F7D46B', fontSize: '0.78rem', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+              <Sprout size={15} /> Smart support for every season
             </div>
             <h2 style={{ fontSize: '2rem', color: '#FFFFFF', fontWeight: 800, lineHeight: 1.2, marginBottom: '0.85rem' }}>
               Welcome back to your Digital Farm Companion.
@@ -71,6 +87,27 @@ export const SignInPage = ({ onNavigate }) => {
           <p style={{ fontSize: '0.9rem', color: 'var(--color-charcoal-muted)', marginBottom: '2rem' }}>
             {t('signin.subtitle')}
           </p>
+
+          <div style={{ background: '#F1F8E9', border: '1px solid #C5E1A5', borderRadius: 'var(--radius-md)', padding: '1rem', marginBottom: '1.25rem' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--color-forest-green-dark)', fontWeight: 800, marginBottom: '0.35rem' }}>
+              <Sprout size={18} /> Try AgriSaarthi with demo farm data
+            </div>
+            <p style={{ margin: '0 0 0.75rem', fontSize: '0.82rem', color: 'var(--color-charcoal-muted)', lineHeight: 1.45 }}>
+              Explore the dashboard and onboarding with a sample Nashik farmer profile. No real account or backend record is created.
+            </p>
+            <button type="button" onClick={continueWithDemo} style={{ width: '100%', padding: '0.75rem', border: '1px solid var(--color-forest-green)', borderRadius: 'var(--radius-full)', color: 'var(--color-forest-green)', fontWeight: 800, background: 'white' }}>
+              Continue with Demo Farm
+            </button>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '0.6rem', marginTop: '2rem' }}>
+            {['Crop advice', 'Plant health', 'Schemes'].map(item => (
+              <div key={item} style={{ padding: '0.65rem 0.5rem', border: '1px solid rgba(255,255,255,0.18)', background: 'rgba(255,255,255,0.1)', borderRadius: '10px', backdropFilter: 'blur(4px)', fontSize: '0.72rem', fontWeight: 700, textAlign: 'center' }}>
+                <CheckCircle2 size={13} style={{ display: 'block', margin: '0 auto 0.3rem', color: '#F7D46B' }} />
+                {item}
+              </div>
+            ))}
+          </div>
 
           <form onSubmit={handleSubmit}>
             <div className="form-group">
@@ -139,7 +176,7 @@ export const SignInPage = ({ onNavigate }) => {
               Don't have an account?{' '}
               <button
                 type="button"
-                onClick={handleSubmit}
+                onClick={() => completeSignIn({ name: 'New Farmer', emailOrPhone, location: 'India' })}
                 style={{ color: 'var(--color-forest-green)', fontWeight: 800 }}
               >
                 {t('signin.createAccount')}
