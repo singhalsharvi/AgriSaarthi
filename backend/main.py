@@ -1,5 +1,6 @@
 from pathlib import Path
 import sys
+import os
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -19,11 +20,14 @@ app = FastAPI(
     version="1.0.0",
 )
 
-# CORS middleware to allow connections from web/mobile frontends
+# CORS middleware to allow the deployed frontend (and local development).
+configured_origins = os.getenv("CORS_ORIGINS", "http://localhost:3000,http://localhost:5173")
+allowed_origins = [origin.strip().rstrip("/") for origin in configured_origins.split(",") if origin.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
+    allow_origins=allowed_origins,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
