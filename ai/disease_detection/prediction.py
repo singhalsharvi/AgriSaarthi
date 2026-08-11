@@ -2,10 +2,6 @@ import os
 import sys
 import json
 import math
-import torch
-import torch.nn as nn
-import torchvision.models as models
-from torchvision import transforms
 from PIL import Image
 
 # Ensure project root is in sys.path
@@ -76,6 +72,7 @@ def load_metadata() -> dict:
 
 
 def build_inference_transform(metadata: dict):
+    from torchvision import transforms
     return transforms.Compose([
         transforms.Resize(metadata["image_size"]),
         transforms.ToTensor(),
@@ -93,6 +90,10 @@ def load_model():
 
     metadata = load_metadata()
     num_classes = len(metadata["classes"])
+
+    import torch
+    import torch.nn as nn
+    import torchvision.models as models
 
     # Rebuild MobileNetV2 architecture
     try:
@@ -159,6 +160,8 @@ def predict_disease(image_pil: Image.Image) -> dict:
         raise TypeError("A decoded PIL image is required for disease prediction.")
     if image_pil.width < 64 or image_pil.height < 64:
         raise ValueError("Image is too small. Upload a clear leaf photo at least 64×64 pixels.")
+
+    import torch
 
     model = load_model()
     metadata = load_metadata()
