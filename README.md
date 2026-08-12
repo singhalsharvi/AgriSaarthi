@@ -1,9 +1,3 @@
----
-title: AgriSaarthi API
-sdk: docker
-app_port: 7860
----
-
 # 🌾 AgriSaarthi
 
 **AgriSaarthi** ("Agri-companion") is a full-stack agricultural advisory platform that gives farmers AI-driven crop recommendations, crop disease detection, and personalized government scheme eligibility — through a multilingual web app backed by a FastAPI service and a suite of trained ML and RAG pipelines.
@@ -131,7 +125,7 @@ pip install -r requirements.txt
 cp .env.example .env
 # edit .env and set GEMINI_API_KEY=your_actual_key
 
-uvicorn backend.main:app --reload --port 8000
+uvicorn backend.main:app --reload --host 127.0.0.1 --port 8000
 ```
 
 API available at `http://localhost:8000`, interactive docs at `http://localhost:8000/docs`.
@@ -144,7 +138,7 @@ npm install
 npm run dev
 ```
 
-Runs on `http://localhost:3000` and proxies `/api` requests to the backend on port `8000`.
+Runs on `http://localhost:3000` and proxies `/api` requests to the backend at `http://127.0.0.1:8000`.
 
 ---
 
@@ -193,7 +187,7 @@ Full request/response schemas are available via the Swagger UI at `/docs`.
 The `tests/` directory contains a pytest suite covering confidence-based fallback logic, disease detection, farmer-profile flows, location-aware crop RAG retrieval, and the end-to-end RAG pipeline.
 
 ```bash
-pytest tests/
+python -m unittest discover
 ```
 
 ---
