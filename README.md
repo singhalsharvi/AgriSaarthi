@@ -1,3 +1,9 @@
+---
+title: AgriSaarthi API
+sdk: docker
+app_port: 7860
+---
+
 # 🌾 AgriSaarthi
 
 **AgriSaarthi** ("Agri-companion") is a full-stack agricultural advisory platform that gives farmers AI-driven crop recommendations, crop disease detection, and personalized government scheme eligibility — through a multilingual web app backed by a FastAPI service and a suite of trained ML and RAG pipelines.
